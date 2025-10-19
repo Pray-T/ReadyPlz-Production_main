@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>비밀번호 재설정 요청</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .container { max-width: 400px; margin: 60px auto; background: rgba(120,80,200,0.13); border-radius: 12px; padding: 32px; box-shadow: 0 4px 24px 0 rgba(80,80,120,0.10); }
+        h2 { color: #07f7af; text-align: center; margin-bottom: 24px; }
+        label { display: block; margin-bottom: 8px; color: #07f7af; }
+        input[type=email] { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ccc; margin-bottom: 16px; }
+        button { width: 100%; background: #07f7af; color: #fff; border: none; border-radius: 4px; padding: 10px; font-weight: 600; font-size: 1em; cursor: pointer; }
+        button:hover { background: #05cfa0; }
+        .msg { color: #07bfa7; text-align: center; margin-bottom: 12px; }
+        .error { color: #d32f2f; text-align: center; margin-bottom: 12px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>비밀번호 재설정</h2>
+    <form th:action="@{/members/reset-request}" method="post">
+        <label for="email">가입한 이메일 주소</label>
+        <input type="email" id="email" name="email" required placeholder="이메일 입력">
+        <div th:if="${error}" class="error" th:text="${error}"></div>
+        <div th:if="${msg}" class="msg" th:text="${msg}"></div>
+        <button type="submit">재설정 메일 보내기</button>
+    </form>
+    <div style="text-align:center; margin-top:18px;">
+        <a href="/members/loginForm" style="color:#07f7af;">로그인으로 돌아가기</a>
+    </div>
+</div>
+</body>
+</html> 

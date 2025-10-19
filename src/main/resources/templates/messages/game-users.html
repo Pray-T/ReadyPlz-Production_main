@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReadyPlz - 게임 사용자 목록</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/js/apiClient.js"></script>
+    <script src="/js/auth.js"></script>
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background-color: #5b3d77;
+        }
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 2rem;
+            background-color: rgba(7, 118, 161, 0.1);
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        .game-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+        .game-header h1 {
+            color: #07f7af;
+            margin-bottom: 0.5rem;
+        }
+        .game-info {
+            color: #07f7af;
+            font-size: 1.1rem;
+        }
+        .game-image {
+            max-width: 200px;
+            max-height: 100px;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+        .users-section {
+            margin-top: 2rem;
+        }
+        .users-section h2 {
+            color: #07f7af;
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        .user-list {
+            list-style: none;
+            padding: 0;
+        }
+        .user-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            transition: background-color 0.3s;
+        }
+        .user-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .user-info {
+            flex-grow: 1;
+        }
+        .user-nickname {
+            color: #07f7af;
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
+        .user-username {
+            color: rgba(7, 247, 175, 0.7);
+            font-size: 0.9rem;
+        }
+        .message-button {
+            padding: 0.5rem 1rem;
+            background-color: #07f7af;
+            color: #333;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        .message-button:hover {
+            background-color: #05d89c;
+        }
+        .no-users {
+            text-align: center;
+            color: #07f7af;
+            font-style: italic;
+            padding: 2rem;
+        }
+        .nav-links {
+            text-align: center;
+            margin-top: 2rem;
+        }
+        .nav-links a {
+            color: #07f7af;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+        
+        /* 우측 상단 네비게이션 */
+        .top-nav {
+            position: fixed;
+            top: 0;
+            right: 0;
+            padding: 1rem;
+            z-index: 1000;
+        }
+        .top-nav a {
+            color: #07f7af;
+            text-decoration: none;
+            margin-left: 1rem;
+            padding: 0.5rem 1rem;
+            border: 2px solid #07f7af;
+            border-radius: 4px;
+            background-color: rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+        .top-nav a:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: #05d89c;
+            border-color: #05d89c;
+        }
+    </style>
+</head>
+<body>
+    <!-- 우측 상단 네비게이션 -->
+    <div class="top-nav">
+        <a href="#" onclick="navigateWithAuth('/')">홈으로</a>
+        <a href="#" onclick="handleLogout()">로그아웃</a>
+    </div>
+
+    <div class="container">
+        <div class="game-header">
+            <h1 th:text="${game.name}">게임 이름</h1>
+            <img th:if="${game.headerImageUrl}" th:src="${game.headerImageUrl}" alt="게임 이미지" class="game-image">
+            <div class="game-info">
+                <p th:if="${game.releaseDate}">출시일: <span th:text="${#temporals.format(game.releaseDate, 'yyyy-MM-dd')}"></span></p>
+                <p>Steam App ID: <span th:text="${game.appid}"></span></p>
+            </div>
+        </div>
+
+        <div class="users-section">
+            <h2>이 게임을 소유한 사용자들</h2>
+            
+            <div th:if="${#lists.isEmpty(gameUsers)}" class="no-users">
+                <p>이 게임을 소유한 다른 사용자가 없습니다.</p>
+            </div>
+            
+            <ul th:if="${!#lists.isEmpty(gameUsers)}" class="user-list">
+                <li th:each="user : ${gameUsers}" class="user-item">
+                    <div class="user-info">
+                        <div class="user-nickname" th:text="${user.nickname}">사용자 닉네임</div>
+                        <div class="user-username" th:text="${'@' + user.username}">@사용자명</div>
+                    </div>
+                    <a href="#" th:onclick="'navigateToConversation(' + ${user.id} + ')'" class="message-button">메시지 보내기</a>
+                </li>
+            </ul>
+        </div>
+
+    </div>
+
+    <script src="/js/auth.js"></script>
+    <script src="/js/apiClient.js"></script>
+    <script th:inline="javascript">
+        function navigateToConversation(userId) {
+            // userId가 유효한지 확인
+            if (!userId || userId === 'null' || userId === null) {
+                console.error('유효하지 않은 사용자 ID:', userId);
+                alert('유효하지 않은 사용자입니다.');
+                return;
+            }
+            
+            // 토큰을 URL에 포함하지 않고 단순 이동
+            window.location.href = `/messages/${userId}`;
+        }
+    </script>
+</body>
+</html> 

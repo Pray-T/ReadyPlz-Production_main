@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>ReadyPlz - 로그인</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <form id="loginForm" class="login-form">
+            <h2>로그인</h2>
+            <div id="error-message" class="alert alert-error" style="display: none;"></div>
+            <div id="success-message" class="alert alert-success" style="display: none;"></div>
+            <div class="form-group">
+                <label for="username">아이디</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">비밀번호</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit" class="btn primary">로그인</button>
+            <div class="login-link">
+                <a href="/">홈으로</a>
+                <span style="margin: 0 8px; color: #aaa;">|</span>
+                <a href="/members/register">회원가입</a>
+                <span style="margin: 0 8px; color: #aaa;">|</span>
+                <a href="/members/reset-request">비밀번호 재설정</a>
+            </div>
+        </form>
+    </div>
+
+    <script src="/js/auth.js"></script>
+    <script src="/js/apiClient.js"></script>
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', handleLogin);
+        
+        // 에러 메시지 표시 함수
+        function showError(message) {
+            const errorElement = document.getElementById('error-message');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+        
+        // 성공 메시지 표시 함수
+        function showSuccess(message) {
+            const successElement = document.getElementById('success-message');
+            successElement.textContent = message;
+            successElement.style.display = 'block';
+        }
+        
+        // URL 파라미터에서 메시지 확인 -> 서버 렌더링으로 대체
+        // const urlParams = new URLSearchParams(window.location.search);
+        // const msg = urlParams.get('msg');
+        // if (msg) {
+        //     showSuccess(msg);
+        // }
+        
+        // 서버 측에서 전달된 성공 메시지 확인
+        const serverMsg = /*[[${msg}]]*/ null;
+        if (serverMsg) {
+            showSuccess(serverMsg);
+        }
+        
+        // 서버 측에서 전달된 에러 메시지 확인 (Stateless 방식)
+        const serverError = /*[[${error}]]*/ null;
+        if (serverError) {
+            showError(serverError);
+        }
+    </script>
+</body>
+</html> 

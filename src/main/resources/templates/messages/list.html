@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReadyPlz - 메시지</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/js/apiClient.js"></script>
+    <script src="/js/auth.js"></script>
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background-color: #5b3d77;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 2rem;
+            background-color: rgba(7, 118, 161, 0.1);
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        .message-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .message-header h1 {
+            color: #07f7af;
+            margin-bottom: 1rem;
+        }
+        .conversation-list {
+            list-style: none;
+            padding: 0;
+        }
+        .conversation-item {
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .conversation-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .conversation-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        .conversation-user {
+            color: #07f7af;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        .conversation-time {
+            color: rgba(7, 247, 175, 0.7);
+            font-size: 0.9rem;
+        }
+        .conversation-preview {
+            color: #07f7af;
+            margin: 0.5rem 0;
+            display: flex;
+            align-items: center;
+        }
+        .message-indicator {
+            color: #05d89c;
+            font-weight: bold;
+            margin-right: 5px;
+        }
+        .nav-links {
+            text-align: center;
+            margin-top: 2rem;
+        }
+        .nav-links a {
+            color: #07f7af;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+        
+        .pagination {
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+        .pagination a, .pagination span {
+            display: inline-block;
+            margin: 0 6px;
+            padding: 6px 10px;
+            color: #07f7af;
+            text-decoration: none;
+            border: 1px solid rgba(7, 247, 175, 0.4);
+            border-radius: 4px;
+            background-color: rgba(255, 255, 255, 0.06);
+        }
+        .pagination a:hover {
+            background-color: rgba(255, 255, 255, 0.15);
+        }
+        .pagination .current {
+            color: #333;
+            background-color: #07f7af;
+            border-color: #07f7af;
+            font-weight: 700;
+        }
+        
+        /* 우측 상단 네비게이션 */
+        .top-nav {
+            position: fixed;
+            top: 0;
+            right: 0;
+            padding: 1rem;
+            z-index: 1000;
+        }
+        .top-nav a {
+            color: #07f7af;
+            text-decoration: none;
+            margin-left: 1rem;
+            padding: 0.5rem 1rem;
+            border: 2px solid #07f7af;
+            border-radius: 4px;
+            background-color: rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+        .top-nav a:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: #05d89c;
+            border-color: #05d89c;
+        }
+    </style>
+</head>
+<body>
+    <!-- 우측 상단 네비게이션 -->
+    <div class="top-nav">
+        <a href="#" onclick="navigateWithAuth('/')">홈으로</a>
+        <a href="#" onclick="handleLogout()">로그아웃</a>
+    </div>
+
+    <div class="container">
+        <div class="message-header">
+            <h1>메시지</h1>
+            <p th:if="${isLimitReached}" style="color: #ff6b6b; font-weight: bold;">⚠️ 메시지 저장 한도에 도달했습니다!</p>
+        </div>
+
+        <div class="conversation-list">
+            <div th:each="conversation : ${conversations}" class="conversation-item" 
+                 th:onclick="'navigateToConversation(' + ${conversation.otherMemberId} + ')'">
+                <div class="conversation-header">
+                    <span class="conversation-user" th:text="${conversation.otherMemberNickname}"></span>
+                    <span class="conversation-time" th:text="${#temporals.format(conversation.lastMessageTime, 'yyyy-MM-dd HH:mm')}"></span>
+                </div>
+                <div class="conversation-preview">
+                    <span th:if="${conversation.isLastMessageFromMe}" class="message-indicator">나: </span>
+                    <span th:text="${conversation.lastMessageContent}"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="pagination" th:if="${conversationsPage != null and conversationsPage.totalPages > 1}">
+            <a th:if="${conversationsPage.hasPrevious()}"
+               th:href="@{/messages(page=${conversationsPage.number - 1}, size=${conversationsPage.size})}">이전</a>
+            <span th:each="i : ${#numbers.sequence(0, conversationsPage.totalPages - 1)}">
+                <a th:if="${i != conversationsPage.number}"
+                   th:text="${i + 1}"
+                   th:href="@{/messages(page=${i}, size=${conversationsPage.size})}"></a>
+                <span th:if="${i == conversationsPage.number}" class="current" th:text="${i + 1}"></span>
+            </span>
+            <a th:if="${conversationsPage.hasNext()}"
+               th:href="@{/messages(page=${conversationsPage.number + 1}, size=${conversationsPage.size})}">다음</a>
+        </div>
+
+    </div>
+
+    <script src="/js/auth.js"></script>
+    <script src="/js/apiClient.js"></script>
+    <script>
+        function navigateToConversation(userId) {
+            // userId가 유효한지 확인
+            if (!userId || userId === 'null' || userId === null) {
+                console.error('유효하지 않은 사용자 ID:', userId);
+                alert('유효하지 않은 사용자입니다.');
+                return;
+            }
+            
+            // 토큰을 URL에 포함하지 않고 단순 이동
+            window.location.href = `/messages/${userId}`;
+        }
+    </script>
+</body>
+</html> 
