@@ -18,8 +18,8 @@
 
 
 
-## 전체 아키텍처
--ROLE에 따라서 관리자 전용 경로와 사용자 전용 경로가 존재.
+## 이 웹앱의 흐름 개요에 관하여.
+-ROLE에 따라서 관리자 전용 경로와 사용자 전용 경로가 존재합니다.
 
 <img width="522" height="92" alt="스크린샷 2025-10-12 182028" src="https://github.com/user-attachments/assets/58497bac-732e-45ee-88a3-5d678900a51f" />
 
