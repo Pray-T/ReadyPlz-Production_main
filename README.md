@@ -36,7 +36,8 @@
 
 <img width="1882" height="553" alt="스크린샷 2025-10-12 182424" src="https://github.com/user-attachments/assets/a5fa788c-0d19-46d0-9ee0-dcb7db051035" />
 
--AWS에서 EC2서비스의 Ubuntu를 통해서 서버를 배포했고, AWS의 RDS를 통해서 MySQL의 역할을 하고 있고 Redis는 EC2안의 Ubuntu에 설치해서 사용하고 있습니다.
+-AWS에서 EC2서비스의 Ubuntu를 통해서 서버를 배포했고, AWS의 RDS를 통해서 MySQL의 역할을 하고 있고 Redis는 EC2안의 Ubuntu에 설치해서 사용하고 있습니다. <br>
+-AWS의 ELB를 사용함으로써 엔드포인트로 들어오는 요청에 대하여 보안, 가용성 증대, 라우팅의 효과를 누리고 있습니다.
 
 <img width="1060" height="273" alt="스크린샷 2025-10-12 184338" src="https://github.com/user-attachments/assets/c7ec06d7-4c2f-427c-b5b1-62554303fe23" />
 
