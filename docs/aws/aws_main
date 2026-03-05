@@ -1,8 +1,8 @@
-## 상세 문서 (Table of Contents)
+##  상세 문서 (Table of Contents)
 *아래 링크를 클릭하시면 해당 상세 페이지로 이동합니다.*
 
-##  [1.인스턴스 관련](./docs/aws/instance.md)
-aws 인스턴스에 관련된 내용입니다.
+###  [1. 인스턴스 관련](./docs/aws/instance.md)
+AWS 인스턴스(EC2)에 관련된 내용입니다.
 
-## [2.RDS 관련](./docs/aws/rds.md)
-aws rds에 관련된 내용입니다.
+###  [2. RDS 관련](./docs/aws/rds.md)
+AWS 데이터베이스(RDS)에 관련된 내용입니다.
