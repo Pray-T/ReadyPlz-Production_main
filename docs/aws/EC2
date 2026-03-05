@@ -1,29 +1,35 @@
 1.주로 서비스를 제공할 지역이 한국이기에 "아시아태평양(서울)"로 리젼을 선택했습니다.
 <img width="334" height="819" alt="Image" src="https://github.com/user-attachments/assets/fcc3998d-601f-474e-b019-0dda3962f663" />
 
+
 2.Windows나 Mac보다 가벼운 Ubuntu를 인스턴스의 OS를 선택했습니다.
 <img width="1071" height="678" alt="Image" src="https://github.com/user-attachments/assets/7fa966fe-a5b5-418b-82a5-1e46c2eaa482" />
+
 
 3.사용자가 많지 않은 환경이기에 인스턴스는 t3.micro를 선택했습니다. t2.micro와 가격차이는 크게 안나고 2cpu의 장점을 취할 수 있습니다.
 <img width="1090" height="207" alt="Image" src="https://github.com/user-attachments/assets/04b260f1-4dc1-4c6c-8fd3-ca7556af3ad1" />
 
+
 4.네트워크를 설정하고 보안그룹를 생성하여 인바운드 규칙을 정했습니다. ssh의 원격접근을 위해서 22번 포트를 허용했고, 백엔드 서버를 띄울 80번 포트를 허용했습니다.
 <img width="953" height="679" alt="Image" src="https://github.com/user-attachments/assets/0429bc0a-fbab-4d32-8b29-54983ed59f85" />
+
 
 5.사용자가 많지 않은 점을 감안하여 스토리지는 8gb의 "gp3"를 선택했습니다. 스토리지는 부족하면 추후에 변경할 수 있기에 가벼운 스토리지로 시작을 했습니다.
 <img width="957" height="312" alt="Image" src="https://github.com/user-attachments/assets/8adb24b1-ead7-43b6-81ae-bfaf10912755" />
 
+
 6.탄력적 IP를 설정하여 인스턴스를 중지후 재가동하더라 IP 변경이 없도록 설정했습니다.
 <img width="1678" height="278" alt="Image" src="https://github.com/user-attachments/assets/8ea52e49-fdd4-402d-b2db-dbf77e5241e3" />
+
 
 DNS를 위해서 가비아에서 도메인을 구매후 가비아에서 DNS 설정을 했습니다.
 <img width="1658" height="383" alt="Image" src="https://github.com/user-attachments/assets/d94d4c76-8e28-4bb6-a76e-64df14a6d14a" />
 
+
 8.AWS의 route53에서 도메인과 탄력적 IP를 연결시켰습니다.
 <img width="1635" height="608" alt="Image" src="https://github.com/user-attachments/assets/c8e8fe32-37a1-49b1-9d15-7db060c241ce" />
+
 
 9.가비아의 네임서버에 Route 53 호스팅 영역의 NS 값 4개를 연결시켰습니다.
 <img width="1190" height="572" alt="Image" src="https://github.com/user-attachments/assets/f63ecb97-3fc2-4530-961e-23a14a4ef12d" />
 <img width="831" height="262" alt="Image" src="https://github.com/user-attachments/assets/46880d9e-c068-4343-83ce-a81b7828cef6" />
-
-
