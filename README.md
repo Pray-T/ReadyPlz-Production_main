@@ -35,7 +35,7 @@
 ## 🔥 [4.트러블 슈팅](./docs/04-troubleshooting.md)
 과도한 API 요청에 의한 `302 Too many Request` 문제와 이를 해결하기 위한 아키텍처 변경 경험을 담았습니다.
 
-## [5.AWS관련](./docs/aws/aws_main)
+## [5.AWS관련](./docs/aws/aws_main.md)
 
 ---
 *이상입니다, 저의 깃허브 방문을 감사드립니다.*
