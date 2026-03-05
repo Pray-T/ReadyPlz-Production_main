@@ -3,7 +3,7 @@
 ###  [1. EC2 관련](./EC2)
 EC2와 생성과 설정에 관련된 내용입니다.
 
-###  [2. Ubutu에 SpringBoot 서버 배포 관련](./ubuntu-springboot)
+###  [2. Ubnutu에 SpringBoot 서버 배포 관련](./ubuntu)
 ubuntu에 springboot 서버 배포와 관련된 내용입니다.
 
 ###  [3. 배포한 웹사이트 HTTPS 적용 관련](./https)
