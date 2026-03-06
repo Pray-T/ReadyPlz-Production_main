@@ -8,6 +8,7 @@ ROLE에 따라 관리자(ADMIN) 전용 경로와 사용자(USER) 전용 경로�
 
 ### 관리자 기능
 ADMIN은 JSON 파일로부터 DB를 업데이트하는 데 사용됩니다.
+<br>
 <img width="541" height="207" alt="스크린샷 2025-10-12 182809" src="https://github.com/user-attachments/assets/dbe9bfe3-1a1f-495c-a1b4-00848e58d3de" />
 
 ### 고객 센터 채널
