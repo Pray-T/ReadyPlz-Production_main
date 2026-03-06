@@ -26,13 +26,13 @@
 ## [2.주요 기능](./docs/02-features.md)
 이중 토큰(Access/Refresh) 전략, 실시간 채팅, 비밀번호 재설정 등 프로젝트의 핵심 기능을 소개합니다.
 
-##  [3.기술적 고민 및 아키텍처 결정](./docs/03-tech-decisions.md)
+## [3.기술적 고민 및 아키텍처 결정](./docs/03-tech-decisions.md)
 - JWT와 Redis를 조합한 인증 방식
 - Spring Security의 커스텀 필터 흐름
 - SMTP(포트 587)를 활용한 비동기 이메일 처리
 - WebSocket과 STOMP를 활용한 채팅 아키텍처
 
-## 🔥 [4.트러블 슈팅](./docs/04-troubleshooting.md)
+## [4.문제 해결](./docs/04-troubleshooting.md)
 과도한 API 요청에 의한 `302 Too many Request` 문제와 이를 해결하기 위한 아키텍처 변경 경험을 담았습니다.
 
 ## [5.AWS관련](./docs/aws/aws_main.md)
