@@ -19,6 +19,6 @@
 
 <br><br><br>
 
-  ! 문제 발생: JVM의 과도한 메모리 사용으로 SSH이 멈추는 현상이 발생했습니다.
+  ! 문제 발생: JVM의 과도한 메모리 사용으로 SSH이 멈추는 현상이 발생했습니다. <br>
     해결방안 : JVM의 메모리 사용을 제한합니다.
 <img width="769" height="24" alt="스크린샷 2026-03-06 171000" src="https://github.com/user-attachments/assets/42da38aa-faf5-4edd-b2ef-9322af792058" />
