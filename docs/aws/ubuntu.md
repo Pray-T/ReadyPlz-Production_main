@@ -11,6 +11,7 @@
 <img width="784" height="31" alt="스크린샷 2026-03-06 170156" src="https://github.com/user-attachments/assets/12788587-e6f3-4116-8789-94321ab8e577" />
 <br><br><br>
   3. 프로젝트를 빌드하고 백그라운드에서 서버를 실행시켜줍니다.
+<br>
 <img width="529" height="30" alt="스크린샷 2026-03-06 170732" src="https://github.com/user-attachments/assets/1eb87b87-9b22-4309-a0ec-c39dbf8ba1cd" />
 <br>
 <br>
