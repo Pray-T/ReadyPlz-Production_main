@@ -10,14 +10,13 @@
 
 - 이름 : 최성욱
 - 이메일 : cenmot@naver.com
-- 포트폴리오 : [https://readyplz.com](https://readyplz.com)
 - 기술 스택 : `Java`, `Spring Boot`, `JPA`, `Spring Security`, `JWT`, `Redis`, `MySQL`, `AWS(EC2, RDS)`
 
 <br/>
 
 ---
 
-## 상세 문서 (Table of Contents)
+## 상세 문서
 *아래 링크를 클릭하시면 해당 상세 페이지로 이동합니다.*
 
 ##  [1.웹앱 흐름 및 아키텍처 개요](./docs/01-architecture.md)
@@ -37,5 +36,9 @@
 
 ## [5.AWS관련](./docs/aws/aws_main.md)
 
----
+
+<br>
+<br>
+<br>
+
 *이상입니다, 저의 깃허브 방문을 감사드립니다.*
