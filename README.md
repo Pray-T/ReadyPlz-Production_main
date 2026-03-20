@@ -35,7 +35,7 @@
 과도한 API 요청에 의한 `302 Too many Request` 문제와 이를 해결하기 위한 아키텍처 변경 경험을 담았습니다.
 
 ## [5.AWS관련](./docs/aws/aws_main.md)
-
+서버를 배포한 AWS의 EC2, ELB, RDS 등과 관련된 내용입니다.
 
 <br>
 <br>
