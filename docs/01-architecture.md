@@ -2,22 +2,15 @@
 
 # 1.웹앱 흐름 및 아키텍처 개요
 
-## 1.1 시스템 아키텍처 다이어그램 (System Architecture) 
-
-<br>
-<br>
+## 1.1 시스템 아키텍처 다이어그램 (System Architecture)
 계층(Layer) 간의 의존성은 아래와 같이 분리설계 하였습니다.<br>
 <br>
 
 <img width="400" height="697" alt="스크린샷 2026-03-20 140653" src="https://github.com/user-attachments/assets/74f1e165-7f42-4e01-9021-283476e37eee" />
-
-
 <br>
 <br>
 
 ## 1.2 계층별 역할 (Layer Details) 
-<br>
-<br>
   (1). Client Layer<br>
 서버 사이드 렌더링(SSR)을 통해 초기 로딩 속도 향상을 의도했습니다.<br>
 <br>
@@ -52,8 +45,6 @@ Member ↔ Message (1:N): 하나의 회원은 송신자(Sender) 또는 수신자
 <br>
 
 ## 1.3 USER 계정 흐름 
-
-<br>
 [회원가입]
   Client → POST /api/auth/register (MemberForm)
     → 입력 검증 (Bean Validation)
@@ -88,7 +79,6 @@ Member ↔ Message (1:N): 하나의 회원은 송신자(Sender) 또는 수신자
 
 
 ## 1.4 USER 계정 기능
-<br>
 [게임 컬렉션 관리] <br>
   GET /games/collection
     → 내 게임 목록 조회
