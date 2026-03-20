@@ -2,7 +2,7 @@
 
 # 1.웹앱 흐름 및 아키텍처 개요
 
-## 1. 시스템 아키텍처 다이어그램 (System Architecture) 
+## 1.1 시스템 아키텍처 다이어그램 (System Architecture) 
 
 <br>
 <br>
@@ -15,7 +15,7 @@
 <br>
 <br>
 
-## 2. 계층별 역할 (Layer Details) 
+## 1.2 계층별 역할 (Layer Details) 
 <br>
 <br>
   (1). Client Layer<br>
@@ -51,7 +51,7 @@ Member ↔ Message (1:N): 하나의 회원은 송신자(Sender) 또는 수신자
 <br>
 <br>
 
-## 3. USER 계정 흐름 
+## 1.3 USER 계정 흐름 
 
 <br>
 [회원가입]
@@ -87,7 +87,7 @@ Member ↔ Message (1:N): 하나의 회원은 송신자(Sender) 또는 수신자
     → 블랙리스트 확인 → 토큰 검증 → SecurityContext 설정
 
 
-## 4.USER 계정 기능
+## 1.4 USER 계정 기능
 <br>
 [게임 컬렉션 관리] <br>
   GET /games/collection
@@ -126,7 +126,7 @@ Member ↔ Message (1:N): 하나의 회원은 송신자(Sender) 또는 수신자
   GET  /members/reset-password?token=... → 토큰 검증 후 재설정 페이지
   POST /members/reset-password → 새 비밀번호 저장
 
-## 5.ADMIN 계정 흐름
+## 1.5 ADMIN 계정 흐름
 접근 제어: <br>
 SecurityConfig에서: <br>
 .requestMatchers("/admin/**").hasRole("ADMIN")<br>
@@ -134,7 +134,7 @@ SecurityConfig에서: <br>
 AdminController에서: <br>
   @PreAuthorize("hasRole('ADMIN')")  (클래스 레벨)<br>
 
-## 6.ADMIN 계정 기능
+## 1.6 ADMIN 계정 기능
 (1). 게임 데이터 로드  <br>
 POST /admin/db/load-json-games
   → JsonToDbService.saveDataFromJsonFile()
