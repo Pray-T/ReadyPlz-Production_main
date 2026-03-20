@@ -1,5 +1,7 @@
 <br>
-1. 시스템 아키텍처 다이어그램 (System Architecture)<br>
+1. 시스템 아키텍처 다이어그램 (System Architecture) :
+---
+<br>
 <br>
 계층(Layer) 간의 의존성은 아래와 같이 분리설계 하였습니다.<br>
 <br>
@@ -9,7 +11,7 @@
 
 <br>
 <br>
-2. 계층별 역할 (Layer Details)
+2. 계층별 역할 (Layer Details) :
 <br>
 <br>
   (1). Client Layer<br>
@@ -41,4 +43,111 @@ Redis (In-Memory DB): 휘발성이 강하고 I/O 속도가 빨라야 하는 JWT 
 <br>
 엔티티 매핑 관계 (ERD 구조) <br>
 Member ↔ MemberGame ↔ Game (M:N 해소): 회원이 선택한 플레이 게임 목록을 관리하기 위해, MemberGame이라는 중간 엔티티를 두어 다대다 관계를 일대다/다대일/일대다 관계로 안전하게 풀었습니다.<br>
-Member ↔ Message (1:N): 하나의 회원은 송신자(Sender) 또는 수신자(Receiver)로서 여러 메시지를 가질 수 있습니다.<br>
+Member ↔ Message (1:N): 하나의 회원은 송신자(Sender) 또는 수신자(Receiver)로서 여러 메시지를 가질 수 있습니다.
+<br>
+<br>
+3. USER 계정 흐름 :
+<br>
+[회원가입]
+  Client → POST /api/auth/register (MemberForm)
+    → 입력 검증 (Bean Validation)
+    → 중복 검사 (username, email, nickname)
+    → BCrypt 비밀번호 암호화
+    → ROLE_USER 자동 부여
+    → DB 저장
+    → 자동 로그인 (JWT 발급 → HttpOnly Cookie 설정)
+
+[로그인]
+  Client → POST /api/auth/login (username, password)
+    → AuthenticationManager 인증
+    → Access Token (1시간) + Refresh Token (12시간) 생성
+    → Redis에 토큰 저장
+    → HttpOnly Cookie로 클라이언트에 전달
+
+[토큰 갱신]
+  Client → POST /api/auth/refresh (refreshToken Cookie)
+    → Refresh Token 검증 + Redis 저장값 비교
+    → 새로운 Access/Refresh Token 발급 (Token Rotation)
+    → Redis 갱신 + Cookie 재설정
+
+[로그아웃]
+  Client → POST /api/auth/logout
+    → Access Token 블랙리스트 등록 (Redis)
+    → 사용자 토큰 전체 삭제 (Redis)
+    → Cookie 삭제 (maxAge=0)
+
+[매 요청마다]
+  JwtAuthenticationFilter가 쿠키/헤더에서 JWT 추출
+    → 블랙리스트 확인 → 토큰 검증 → SecurityContext 설정
+
+
+4.USER 계정 기능
+<br>
+<br>
+[게임 컬렉션 관리]
+  GET /games/collection
+    → 내 게임 목록 조회
+    → 게임 검색 (Steam DB 기반, 페이징)
+    → 같은 게임을 가진 다른 유저 조회 (DTO 프로젝션으로 N+1 방지)
+  
+  POST /games/collection/add-game
+    → 최대 5개 제한 검증 → MemberGame 생성/저장
+  
+  POST /games/collection/remove-game
+    → MemberGame 관계 삭제
+
+[메시징]
+  GET /messages
+    → 대화 목록 조회 (상대방, 마지막 메시지, 읽지 않은 수)
+    → ROLE_ADMIN 계정은 대화 목록에서 필터링
+  
+  GET /messages/{otherMemberId}
+    → 특정 상대와의 대화 내역 조회 (페이징)
+  
+  POST /messages/send
+    → 메시지 전송 (전체 1000개 제한, 초과 시 오래된 10개 자동 삭제)
+  
+  GET /messages/game/{gameId}/users
+    → 특정 게임의 다른 유저 목록 조회 (자신 제외)
+
+[문의하기]
+  POST /messages/inquiry
+    → ADMIN 계정을 자동으로 찾아서 "[문의]" 접두사와 함께 메시지 전송
+
+[프로필 관리]
+  GET /members/profile → 프로필 페이지 (내 게임, 닉네임 등)
+  POST /members/profile/nickname → 닉네임 변경 (중복 검증)
+  POST /members/profile/password → 비밀번호 변경 (현재 비밀번호 확인)
+  POST /members/profile/delete-account → 계정 삭제 (비밀번호 + 이메일 확인)
+
+[비밀번호 재설정]
+  POST /members/reset-request → 이메일로 재설정 링크 발송 (비동기)
+  GET  /members/reset-password?token=... → 토큰 검증 후 재설정 페이지
+  POST /members/reset-password → 새 비밀번호 저장
+
+6.ADMIN 계정 흐름<br>
+접근 제어: <br>
+SecurityConfig에서: <br>
+.requestMatchers("/admin/**").hasRole("ADMIN")<br>
+<br>
+AdminController에서: <br>
+  @PreAuthorize("hasRole('ADMIN')")  (클래스 레벨)<br>
+
+7.ADMIN 계정 기능 <br>
+(1). 게임 데이터 로드  <br>
+POST /admin/db/load-json-games
+  → JsonToDbService.saveDataFromJsonFile()
+    → classpath:steam_games_data.json 파일 읽기
+    → JSON 파싱 (appid, name, headerImage, releaseDate)
+    → 배치 처리 (1000개 단위)
+      → 기존 DB 중복 확인 (appid, name)
+      → 신규 게임만 Game 엔티티로 변환 후 저장
+    → 결과 로깅 (저장/건너뜀/유효하지않음 카운트)
+
+(2). USER 문의 수신 <br>
+사용자가 POST /messages/inquiry 호출 시
+  → MemberService.findAdminMember()로 ADMIN 계정 자동 탐색
+  → ADMIN에게 "[문의] ..." 형태의 메시지 전송
+  → ADMIN은 일반 메시지 시스템을 통해 문의 확인 및 답변
+
+
