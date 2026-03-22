@@ -2,7 +2,7 @@
 
 ## 1. EC2 관련
 
-<p>1. 주로 서비스를 제공할 지역이 한국이기에 "아시아태평양(서울)"로 리전을 선택했습니다.</p>
+<p>1. EC2 인스턴스를 생성할 지역을 먼저 선택합니다. 주로 서비스를 제공할 지역이 한국이기에 "아시아태평양(서울)"로 리전을 선택했습니다.</p>
 <img src="https://github.com/user-attachments/assets/fcc3998d-601f-474e-b019-0dda3962f663" alt="Image 1" style="max-width: 100%;">
 <br><br>
 
