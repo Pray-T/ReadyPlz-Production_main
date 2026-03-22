@@ -1,3 +1,7 @@
+[AWS 메인으로 돌아가기](./aws_main.md)
+
+## 5. AWS의 RDS관련
+
 1. 서비스를 제공할 리젼을 선택하고 "데이터베이스 생성"을 클릭하여 데이터베이스를 생성합니다.
 <img width="400" height="736" alt="스크린샷 2026-03-12 195551" src="https://github.com/user-attachments/assets/d7b2fafa-c654-45e4-95c0-bc57b4a5cb59" />
 <br>
