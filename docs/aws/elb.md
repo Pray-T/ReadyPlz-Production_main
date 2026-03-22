@@ -1,3 +1,7 @@
+[AWS 메인으로 돌아가기](./aws_main.md)
+
+## 3. ELB(Elastic Load Balancer) 관련
+
 1. 서비스 하는 지역의 리전을 선택한 후 로드 밸런서를 생성했습니다. HTTPS를 위해서 로드 밸런서를 사용하기 때문에 ALB(Application Load Balancer)를 선택했습니다.
 ALB를 앞단에 두게 됨으로써 EC2가 직접 HTTPS를 처리하지 않아도 됩니다. ALB가 클라이언트와 HTTPS로 통신하며 암/복호화를 전담합니다. 추가적으로 HTTPS를 위해서는 SSL인증이 필요한데 이를 무료로 발급받을 수 있고 자동적으로 갱신을 해줍니다.
 <img width="1000" height="500" alt="스크린샷 2026-03-06 175106" src="https://github.com/user-attachments/assets/593fcc56-7cb7-4a22-a501-5cf1975d29b6" />
