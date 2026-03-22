@@ -25,12 +25,14 @@ EC2들이 공통으로 사용 되는 보안 그룹의 인바운드 설정을 통
 <img width="1293" height="732" alt="Image" src="https://github.com/user-attachments/assets/2d04d1fe-2a86-4697-b04d-b330a8ce4d39" />
 
 6.RDS의 보안그룹을 설정하고 적용합니다. 인바운드 설정에 5번에서 언급한 특정 IP, 앱이 실행되는 EC2 인스턴스를 통해서만 접근을 허용했습니다. 보안 그룹을 생성한 후 적용할 RDS 인스턴스을 수정하여 연합니다.
-<img width="1248" height="641" alt="Image" src="https://github.com/user-attachments/assets/d742c368-49b9-485e-87c3-37178106817b" /> <br>
-<img width="1208" height="363" alt="Image" src="https://github.com/user-attachments/assets/9487c4f2-6efd-4f17-87e7-03930c53b140" /> <br>
+<img width="1248" height="641" alt="Image" src="https://github.com/user-attachments/assets/d742c368-49b9-485e-87c3-37178106817b" /><br>
+<img width="1208" height="363" alt="Image" src="https://github.com/user-attachments/assets/9487c4f2-6efd-4f17-87e7-03930c53b140" /> 
+
+<br>
 
 
-7. 다양한 언어와 이모지들의 활용을 위해서 파라미터 그룹을 설정합니다. 기본값은 최대 3바이트만 저장 가능한 utf8입니다.( 전 세계 표준인 UTF-8과 다름). 그렇기에 4바이트의 이모지까지 깨지지 않고 전송할 수 있게 파라미터 설정을 합니다. <br>
-아래의 속성들을 "utf8mb4"로 변경합니다.<br>
+7.다양한 언어와 이모지들의 활용을 위해서 파라미터 그룹을 설정합니다. 기본값은 최대 3바이트만 저장 가능한 utf8입니다.( 전 세계 표준인 UTF-8과 다름). 그렇기에 4바이트의 이모지까지 깨지지 않고 전송할 수 있게 파라미터 설정을 합니다. <br>
+아래의 속성들을 "utf8mb4"로 변경합니다.<br><br>
 Client & Connection: 클라이언트가 4바이트짜리 이모지를 입력해서 서버로 보낼 때, 그 통신 글자가 깨지지 않게 합니다.<br>
 Database & Server: 서버와 DB가 4바이트 이모지를 안전하게 디스크 저장하도록 합니다.<br>
 Results: 나중에 저장된 채팅을 조회할 때 화면에 온전히 보여주도록 보장합니다. <br>
