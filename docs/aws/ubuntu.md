@@ -1,3 +1,7 @@
+[AWS 메인으로 돌아가기](./aws_main.md)
+
+## 2. Ubnutu에 SpringBoot 서버 배포 관련
+
 1. SSH에서 Java 설치 후 버전 확인을 진행했습니다.
 <img width="618" height="11" alt="스크린샷 2026-03-06 163020" src="https://github.com/user-attachments/assets/e0dfe483-ef76-4ad8-acf9-63b52ba3909d" />
 <br>
