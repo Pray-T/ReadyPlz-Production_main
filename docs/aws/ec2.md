@@ -1,4 +1,4 @@
-[AWS 메인으로 돌아가기](./docs/aws_main.md)
+[AWS 메인으로 돌아가기](../docs/aws_main.md)
 
 ## 1. EC2 관련
 
