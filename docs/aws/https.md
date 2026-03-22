@@ -1,3 +1,7 @@
+[AWS 메인으로 돌아가기](./aws_main.md)
+
+## 4. Https관련
+
 1. HTTPS를 적용하기 위해서 인증서를 발급 받았습니다. AWS의 "AWS Certificate Manager(ACM)"에서 인증서를 요청합니다.
 
 <img width="1664" height="342" alt="스크린샷 2026-03-11 185841" src="https://github.com/user-attachments/assets/97bf0cb4-7afd-4112-82cf-cf85f0e9caf6" />
