@@ -1,6 +1,6 @@
 [메인으로 돌아가기](../README.md)
 
-# ✨ 2. 주요 기능 소개
+#  2. 주요 기능 소개
 
 ### [2.1 JWT를 통한 로그인 시스템과 Access/Refresh 이중 토큰 전략 사용](./2.1-jwt_double_token.md)
 <br>
