@@ -18,7 +18,10 @@ A. 중요한 차이는 저장해야 하는 데이터의 양과 범위입니다. 
 **Redis 동작 과정 및 이중 토큰 전략:**
 - Redis의 빠른 속도와 `TTL(Time To Live)` 기능은 JWT 유효성 검증과 만료 시간 관리에 최적의 시너지를 제공합니다.
 - Access/Refresh 이중 토큰 전략을 사용하여 탈취 리스크를 감소시켰습니다. 탈취가 의심되는 토큰은 블랙리스트에 올려 인증을 차단합니다.
+- Refresh Token Rotation 전략: 토큰 갱신 시 Refresh Token도 함께 재발급하여, 이전 Refresh Token을 즉시 무효화합니다. <br>
+만약 탈취된 이전 토큰으로 갱신을 시도하면 Redis에 저장된 토큰과 불일치하여 거부되므로, 토큰 재사용을 불가능하게 합니다.
 
+**동작 과정**
 <img width="1136" height="722" alt="image" src="https://github.com/user-attachments/assets/1b147b6e-260b-47df-a8eb-c3483c0f2198" />
 <img width="612" height="151" alt="image" src="https://github.com/user-attachments/assets/836ae0f6-83fe-480c-b6b7-0181d97d830d" />
 
