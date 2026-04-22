@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReadyPlz - 회원가입</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background: rgba(120,80,200,0.18);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px 0 rgba(80,80,120,0.10);
+            width: 100%;
+            max-width: 400px;
+            backdrop-filter: blur(10px);
+        }
+        .nav-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #07f7af;
+            background: rgba(120,80,200,0.13);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            padding: 8px 16px;
+            font-weight: 600;
+            font-size: 0.9em;
+            transition: background 0.18s, color 0.18s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .nav-button:hover {
+            background: rgba(120,80,200,0.22);
+            color: #fff;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .error {
+            color: red;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+        button {
+            color: #07f7af;
+            background: rgba(120,80,200,0.13);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            padding: 10px 15px;
+            font-weight: 600;
+            font-size: 1em;
+            transition: background 0.18s, color 0.18s;
+        }
+        button:hover {
+            background: rgba(120,80,200,0.22);
+            color: #fff;
+        }
+        .login-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .login-link a {
+            color: #07f7af;
+            text-decoration: none;
+        }
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+        .alert {
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+        }
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        h2 {
+            color: #07f7af;
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="nav-button">🏠 홈으로</a>
+    <div class="container">
+        <h2 style="text-align: center; margin-bottom: 30px;">회원가입</h2>
+        <div id="message" class="alert" style="display: none;"></div>
+        <form id="registerForm">
+            <div class="form-group">
+                <label for="username">아이디</label>
+                <input type="text" id="username" name="username" required>
+                <div class="error" id="username-error"></div>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">이메일</label>
+                <input type="email" id="email" name="email" placeholder="비밀번호 찾기시 사용됩니다" required>
+                <div class="error" id="email-error"></div>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">비밀번호</label>
+                <input type="password" id="password" name="password" required style="width:100%;">
+                <div style="text-align:right; margin-top:2px;">
+                    <button type="button" id="togglePassword" style="background:none; border:none; cursor:pointer; color:#888; font-size:1.1em; height:24px; padding:0 6px; line-height:1;">🔒</button>
+                </div>
+                <div class="error" id="password-error"></div>
+            </div>
+            <div class="form-group">
+                <label for="passwordConfirm">비밀번호 확인</label>
+                <input type="password" id="passwordConfirm" name="passwordConfirm" required style="width:100%;">
+                <div style="text-align:right; margin-top:2px;">
+                    <button type="button" id="togglePasswordConfirm" style="background:none; border:none; cursor:pointer; color:#888; font-size:1.1em; height:24px; padding:0 6px; line-height:1;">🔒</button>
+                </div>
+                <div class="error" id="passwordConfirm-error"></div>
+            </div>
+            
+            <div class="form-group">
+                <label for="nickname">닉네임</label>
+                <input type="text" id="nickname" name="nickname" required placeholder="12자 이하만 가능합니다, 공백을 사용할 수 없습니다." pattern="^\S+$" maxlength="12">
+                <div class="error" id="nickname-error"></div>
+            </div>
+            
+            <div class="form-group">
+                <label for="country">국가</label>
+                <select id="country" name="country" required class="form-control">
+                    <option value="">국가를 선택하세요</option>
+                    <option th:each="country : ${countryList}"
+                            th:value="${country.code}"
+                            th:text="${country.name}"></option>
+                </select>
+            </div>
+            
+            <button type="submit">가입하기</button>
+        </form>
+        
+        <div class="login-link">
+            <span style="color: #07f7af;">이미 계정이 있으신가요?</span> <a href="/members/loginForm">로그인</a>
+        </div>
+    </div>
+
+    <script src="/js/auth.js"></script>
+    <script src="/js/apiClient.js"></script>
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', handleRegister);
+        
+        // 메시지 표시 함수
+        function showMessage(message, type) {
+            const messageElement = document.getElementById('message');
+            messageElement.textContent = message;
+            messageElement.className = `alert alert-${type}`;
+            messageElement.style.display = 'block';
+        }
+        
+        // 에러 메시지 표시 함수
+        function showError(fieldId, message) {
+            const errorElement = document.getElementById(fieldId + '-error');
+            errorElement.textContent = message;
+        }
+        
+        // 에러 메시지 초기화
+        function clearErrors() {
+            const errorElements = document.querySelectorAll('.error');
+            errorElements.forEach(element => {
+                element.textContent = '';
+            });
+        }
+
+        // 비밀번호 보기 토글 (아래 버튼)
+        const pwInput = document.getElementById('password');
+        const pwToggle = document.getElementById('togglePassword');
+        pwToggle.addEventListener('click', function() {
+            if (pwInput.type === 'password') {
+                pwInput.type = 'text';
+                pwToggle.innerHTML = '👁';
+            } else {
+                pwInput.type = 'password';
+                pwToggle.innerHTML = '🔒';
+            }
+        });
+        // 비밀번호 확인 보기 토글 (아래 버튼)
+        const pwConfirmInput = document.getElementById('passwordConfirm');
+        const pwConfirmToggle = document.getElementById('togglePasswordConfirm');
+        pwConfirmToggle.addEventListener('click', function() {
+            if (pwConfirmInput.type === 'password') {
+                pwConfirmInput.type = 'text';
+                pwConfirmToggle.innerHTML = '👁';
+            } else {
+                pwConfirmInput.type = 'password';
+                pwConfirmToggle.innerHTML = '🔒';
+            }
+        });
+        // 비밀번호 확인 체크
+        function checkPasswordMatch() {
+            const pw = pwInput.value;
+            const pw2 = pwConfirmInput.value;
+            const error = document.getElementById('passwordConfirm-error');
+            if (pw && pw2 && pw !== pw2) {
+                error.textContent = '비밀번호가 일치하지 않습니다.';
+                return false;
+            } else {
+                error.textContent = '';
+                return true;
+            }
+        }
+        pwInput.addEventListener('input', checkPasswordMatch);
+        pwConfirmInput.addEventListener('input', checkPasswordMatch);
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            if (!checkPasswordMatch()) {
+                e.preventDefault();
+                pwConfirmInput.focus();
+            }
+        });
+    </script>
+</body>
+</html> 

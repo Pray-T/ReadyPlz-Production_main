@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReadyPlz - 내 프로필</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background-color: #5b3d77;
+        }
+        .top-nav {
+            position: fixed;
+            top: 0;
+            right: 0;
+            padding: 1rem;
+            z-index: 1000;
+        }
+        .top-nav a {
+            color: #07f7af;
+            text-decoration: none;
+            margin-left: 1rem;
+            padding: 0.5rem 1rem;
+            border: 2px solid #07f7af;
+            border-radius: 4px;
+            background-color: rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+        .top-nav a:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: #05d89c;
+            border-color: #05d89c;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 80px auto 50px auto;
+            padding: 2rem;
+            background-color: rgba(7, 118, 161, 0.1);
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        .profile-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .profile-header h1 {
+            color: #07f7af;
+            margin-bottom: 1rem;
+        }
+        .section {
+            margin-bottom: 3rem;
+            padding: 1.5rem;
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+        .section h2 {
+            color: #07f7af;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #07f7af;
+            padding-bottom: 0.5rem;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #07f7af;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+        button {
+            padding: 0.75rem 1.5rem;
+            background-color: #07f7af;
+            color: #333;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin: 0.5rem 0.5rem 0.5rem 0;
+        }
+        button:hover {
+            background-color: #05d89c;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+        .modal {
+            width: 100%;
+            max-width: 480px;
+            background: #1f1b2e;
+            border: 1px solid #07f7af44;
+            border-radius: 10px;
+            padding: 1.25rem 1.25rem 1rem 1.25rem;
+            color: #e8e8e8;
+        }
+        .modal h3 { color:#07f7af; margin-top:0; }
+        .modal .modal-actions { display:flex; justify-content:flex-end; gap:.5rem; margin-top: .75rem; }
+        .modal .hint { color:#ffc107; font-size:.9rem; margin:.5rem 0 1rem 0; }
+        .nav-links {
+            text-align: center;
+            margin-top: 1rem;
+        }
+        .nav-links a {
+            color: #07f7af;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+        .user-info {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+        .user-info p {
+            color: #07f7af;
+            margin: 0.5rem 0;
+        }
+        .password-form {
+            max-width: 400px;
+        }
+        .error-message {
+            background-color: rgba(220, 53, 69, 0.2);
+            border: 1px solid #dc3545;
+            border-radius: 4px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            color: #dc3545;
+        }
+        .warning-message {
+            background-color: rgba(255, 193, 7, 0.2);
+            border: 1px solid #ffc107;
+            border-radius: 4px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            color: #ffc107;
+        }
+    </style>
+</head>
+<body>
+    <!-- 우측 상단 네비게이션 -->
+    <div class="top-nav">
+        <a href="#" onclick="navigateWithAuth('/')">홈으로</a>
+        <a href="#" onclick="handleLogout()">로그아웃</a>
+    </div>
+
+    <div class="container">
+        <div class="profile-header">
+            <h1>내 프로필</h1>
+        </div>
+        
+        <!-- 사용자 정보 섹션 -->
+        <div class="section">
+            <h2>기본 정보</h2>
+            
+            <!-- 에러/성공 메시지 표시 (RedirectAttributes FlashAttributes) -->
+            <div th:if="${error} == 'empty_nickname'" class="error-message">
+                <strong>❌ 오류:</strong> 닉네임을 입력해주세요.
+            </div>
+            <div th:if="${error} == 'same_nickname'" class="warning-message">
+                <strong>⚠️ 알림:</strong> 현재 닉네임과 동일한 닉네임입니다.
+            </div>
+            <div th:if="${error} == 'password_input_error'" class="error-message">
+                <strong>❌ 오류:</strong> 비밀번호 입력을 다시 확인해주세요.
+            </div>
+            <div th:if="${success} == 'password_updated'" class="warning-message">
+                <strong>✅ 성공:</strong> 비밀번호가 성공적으로 변경되었습니다.
+            </div>
+            
+            <div class="user-info">
+                <p><strong>아이디:</strong> <span th:text="${member.username}"></span></p>
+                <p><strong>이메일:</strong> <span th:text="${member.email}"></span></p>
+                <p><strong>닉네임:</strong> <span th:text="${member.nickname}"></span></p>
+            </div>
+
+            <div th:if="${error} == 'duplicate_nickname'" class="error-message">
+                <strong>❌ 오류:</strong> 중복된 닉네임입니다.
+            </div>
+            <div th:if="${error} == 'email_input_error'" class="error-message">
+                <strong>❌ 오류:</strong> 이메일이 일치하지 않습니다.
+            </div>
+            <div th:if="${error} == 'delete_failed'" class="error-message">
+                <strong>❌ 오류:</strong> 계정 탈퇴 중 오류가 발생했습니다.
+            </div>
+            
+            <form th:action="@{/members/profile/confirm-nickname}" method="post">
+                <div class="form-group">
+                    <label for="nickname">닉네임 변경</label>
+                    <input type="text" id="nickname" name="nickname" th:value="${member.nickname}" placeholder="12자 이하만 가능합니다, 공백을 사용할 수 없습니다.">
+                </div>
+                <button type="submit">닉네임 수정</button>
+            </form>
+        </div>
+
+        <!-- 비밀번호 변경 섹션 -->
+        <div class="section">
+            <h2>비밀번호 변경</h2>
+            
+            
+                         <form th:action="@{/members/profile/change-password}" method="post" class="password-form" id="passwordChangeForm">
+                             <div class="form-group">
+                                 <label for="currentPassword">현재 비밀번호</label>
+                                 <input type="password" id="currentPassword" name="currentPassword" placeholder="현재 비밀번호를 입력하세요" required style="width:100%;">
+                                 <div style="text-align:center; margin-top:2px;">
+                                     <button type="button" id="toggleCurrentPassword" style="background:none; border:none; cursor:pointer; color:#888; font-size:1.1em; height:24px; padding:0 6px; line-height:1;">🔒</button>
+                                 </div>
+                             </div>
+                             <div class="form-group">
+                                 <label for="newPassword">새 비밀번호</label>
+                                 <input type="password" id="newPassword" name="newPassword" placeholder="새 비밀번호를 입력하세요" required style="width:100%;">
+                                 <div style="text-align:center; margin-top:2px;">
+                                     <button type="button" id="toggleNewPassword" style="background:none; border:none; cursor:pointer; color:#888; font-size:1.1em; height:24px; padding:0 6px; line-height:1;">🔒</button>
+                                 </div>
+                             </div>
+                             <div class="form-group">
+                                 <label for="confirmPassword">새 비밀번호 확인</label>
+                                 <input type="password" id="confirmPassword" name="confirmPassword" placeholder="새 비밀번호를 다시 입력하세요" required style="width:100%;">
+                                 <div style="text-align:center; margin-top:2px;">
+                                     <button type="button" id="toggleConfirmPassword" style="background:none; border:none; cursor:pointer; color:#888; font-size:1.1em; height:24px; padding:0 6px; line-height:1;">🔒</button>
+                                 </div>
+                             </div>
+                             <button type="submit">비밀번호 변경</button>
+                         </form>
+        </div>
+
+        <!-- 계정 탈퇴 섹션 -->
+        <div class="section">
+            <h2>계정 관리</h2>
+            <p style="color:#ffc107; margin-bottom:1rem;">계정 탈퇴 시 보유 게임 관계 및 메시지가 삭제되며 복구할 수 없습니다.</p>
+            <button type="button" class="btn-danger" id="openDeleteModalBtn">계정 탈퇴</button>
+        </div>
+
+    </div>
+
+    <!-- Delete Account Modal -->
+    <div id="deleteModalOverlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle">
+        <div class="modal">
+            <h3 id="deleteModalTitle">계정 탈퇴 확인</h3>
+            <div class="hint">이 작업은 되돌릴 수 없습니다. 본인 확인을 위해 정보를 입력하세요.</div>
+            <form id="deleteAccountForm" th:action="@{/members/profile/delete-account}" method="post">
+                <div class="form-group">
+                    <label for="deleteEmail">이메일</label>
+                    <input type="email" id="deleteEmail" name="email" placeholder="이메일을 입력하세요" required>
+                </div>
+                <div class="form-group">
+                    <label for="deletePassword">비밀번호</label>
+                    <input type="password" id="deletePassword" name="password" placeholder="비밀번호" required>
+                </div>
+                <div class="form-group">
+                    <label for="deleteConfirmPassword">비밀번호 확인</label>
+                    <input type="password" id="deleteConfirmPassword" name="confirmPassword" placeholder="비밀번호 재입력" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" id="cancelDeleteBtn">취소</button>
+                    <button type="submit" class="btn-danger">영구 삭제</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/auth.js"></script>
+    <script src="/js/apiClient.js"></script>
+    <script>
+        // 비밀번호 보기/숨기기 토글 기능
+        function togglePasswordVisibility(inputId, buttonId) {
+            const input = document.getElementById(inputId);
+            const button = document.getElementById(buttonId);
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                button.textContent = '👁';
+            } else {
+                input.type = 'password';
+                button.textContent = '🔒';
+            }
+        }
+        
+        // 각 비밀번호 필드에 토글 기능 연결
+        document.getElementById('toggleCurrentPassword').addEventListener('click', function() {
+            togglePasswordVisibility('currentPassword', 'toggleCurrentPassword');
+        });
+        
+        document.getElementById('toggleNewPassword').addEventListener('click', function() {
+            togglePasswordVisibility('newPassword', 'toggleNewPassword');
+        });
+        
+        document.getElementById('toggleConfirmPassword').addEventListener('click', function() {
+            togglePasswordVisibility('confirmPassword', 'toggleConfirmPassword');
+        });
+
+        // Delete modal controls
+        const deleteModalOverlay = document.getElementById('deleteModalOverlay');
+        const openDeleteModalBtn = document.getElementById('openDeleteModalBtn');
+        const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+        const deleteAccountForm = document.getElementById('deleteAccountForm');
+
+        function openDeleteModal() {
+            deleteModalOverlay.style.display = 'flex';
+        }
+        function closeDeleteModal() {
+            deleteModalOverlay.style.display = 'none';
+            deleteAccountForm.reset();
+        }
+        if (openDeleteModalBtn) openDeleteModalBtn.addEventListener('click', openDeleteModal);
+        if (cancelDeleteBtn) cancelDeleteBtn.addEventListener('click', closeDeleteModal);
+        if (deleteModalOverlay) deleteModalOverlay.addEventListener('click', (e) => {
+            if (e.target === deleteModalOverlay) closeDeleteModal();
+        });
+
+        // Handle delete submit
+        if (deleteAccountForm) deleteAccountForm.addEventListener('submit', (e) => {
+            const email = document.getElementById('deleteEmail').value.trim();
+            const password = document.getElementById('deletePassword').value;
+            const confirmPassword = document.getElementById('deleteConfirmPassword').value;
+            if (!email || !password || !confirmPassword) {
+                e.preventDefault();
+                alert('모든 필드를 입력하세요.');
+                return;
+            }
+            if (password !== confirmPassword) {
+                e.preventDefault();
+                alert('비밀번호가 일치하지 않습니다.');
+                return;
+            }
+            // 표준 form submit → 서버 flashAttributes가 정상 반영
+            deleteModalOverlay.style.display = 'none';
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReadyPlz - 게임 목록</title>
+    <link rel="stylesheet" href="/css/game-collection.css">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background-color: #5b3d77;
+        }
+        .top-nav {
+            position: fixed;
+            top: 0;
+            right: 0;
+            padding: 1rem;
+            z-index: 1000;
+        }
+        .top-nav a {
+            color: #07f7af;
+            text-decoration: none;
+            margin-left: 1rem;
+            padding: 0.5rem 1rem;
+            border: 2px solid #07f7af;
+            border-radius: 4px;
+            background-color: rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+        .top-nav a:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: #05d89c;
+            border-color: #05d89c;
+        }
+        .container {
+            max-width: 600px;
+            margin: 80px auto 50px auto;
+            padding: 2rem;
+            background-color: rgba(7, 118, 161, 0.1);
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        .page-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .page-header h1 {
+            color: #07f7af;
+            margin-bottom: 1rem;
+        }
+        .search-section {
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        .search-form {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .search-input {
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 300px;
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+        .search-button {
+            padding: 0.75rem 1.5rem;
+            background-color: #07f7af;
+            color: #333;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .search-button:hover {
+            background-color: #05d89c;
+        }
+        .stats {
+            color: #07f7af;
+            font-size: 0.9rem;
+        }
+        /* 리스트 스타일 */
+        .game-list {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 2rem 0;
+        }
+        .game-list-item {
+            background-color: rgba(255,255,255,0.08);
+            border-bottom: 1px solid #07f7af;
+            padding: 1rem 1.5rem;
+            color: #07f7af;
+            font-size: 1.1rem;
+            transition: background 0.2s;
+        }
+        .game-list-item:last-child {
+            border-bottom: none;
+        }
+        .game-list-item.owned {
+            color: #07f7af;
+            font-weight: bold;
+        }
+        .no-games {
+            text-align: center;
+            color: #ccc;
+            font-style: italic;
+            padding: 3rem;
+        }
+        
+        /* 게임 항목 스타일 수정 */
+        .game-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: rgba(255,255,255,0.08);
+            border-bottom: 1px solid #07f7af;
+            padding: 1rem 1.5rem;
+            color: #07f7af;
+            font-size: 1.1rem;
+            transition: background 0.2s;
+            min-height: 60px;
+        }
+        
+        .game-list-item .game-name {
+            flex: 1;
+            margin-right: 1rem;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            hyphens: auto;
+        }
+        
+        .game-list-item .game-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-shrink: 0;
+            min-width: 80px;
+        }
+        
+        .btn-add-game, .btn-remove-game {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            min-width: 60px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .btn-add-game {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .btn-add-game:hover {
+            background-color: #218838;
+        }
+        
+        .btn-remove-game {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .btn-remove-game:hover {
+            background-color: #c82333;
+        }
+        
+        .game-list-item.owned .btn-add-game {
+            display: none;
+        }
+        
+        .game-list-item:not(.owned) .btn-remove-game {
+            display: none;
+        }
+        
+        /* 페이지네이션 스타일 */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .pagination a, .pagination span {
+            padding: 0.5rem 1rem;
+            text-decoration: none;
+            color: #c0c0c0;
+            transition: all 0.3s ease;
+            min-width: 40px;
+            text-align: center;
+            display: inline-block;
+            background-color: transparent;
+            border-radius: 2px;
+        }
+        
+        .pagination a:hover {
+            color: #07f7af;
+            background-color: rgba(255, 215, 0, 0.1);
+        }
+        
+        .pagination span.current {
+            color: #07f7af;
+            font-weight: bold;
+            background-color: #255,255,255,0.08;
+            border: 1px solid #255,255,255,0.08;
+        }
+
+        /* 내가 선택한 게임 섹션 스타일 개선 */
+        .section.selected-games {
+            margin-bottom: 2rem;
+            padding: 1.2rem 2.5rem;
+            background: rgba(40, 167, 69, 0.04);
+            border-radius: 10px;
+            border: 1.5px solid #07f7af;
+            position: relative;
+        }
+        .selected-games-title {
+            color: #07f7af;
+            font-size: 1.25rem;
+            margin-bottom: 0.7rem;
+            border-bottom: 1.2px solid #07f7af;
+            padding-bottom: 0.3rem;
+            letter-spacing: 0.5px;
+        }
+        .game-list-item.owned {
+            background: rgba(7, 247, 175, 0.07);
+            border-radius: 7px;
+            margin-bottom: 1.2rem;
+            padding: 0.8rem 1.2rem 1.2rem 1.2rem;
+            box-shadow: 0 1px 6px 0 rgba(7, 247, 175, 0.04);
+            border: 1px solid rgba(7, 247, 175, 0.13);
+            position: relative;
+            color: #07f7af;
+            font-weight: bold;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+        }
+        .game-title {
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #07f7af;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+        .btn-users {
+            display: block;
+            margin: 0.1rem 0 0 1.5rem;
+            padding: 0.25em 0.7em;
+            background: rgba(7, 247, 175, 0.13);
+            border: 1px solid #07f7af;
+            border-radius: 6px;
+            color: #07f7af;
+            font-size: 0.6em;
+            cursor: pointer;
+            transition: background 0.2s, border 0.2s;
+            align-self: flex-start;
+        }
+        .btn-users:hover {
+            background: rgba(7, 247, 175, 0.22);
+            border-color: #1de9b6;
+        }
+    
+        .section.selected-games .btn-remove-game {
+            background: rgba(220, 53, 69, 0.13);
+            border: 1px solid #b93441;
+            color: #b93441;
+            border-radius: 6px;
+            padding: 0.25em 0.7em;
+            font-size: 0.6em;
+            /* 아래 세 속성으로 전역 버튼 스타일(높이/최소너비/플렉스)을 무시하여 btn-users와 동일 크기 */
+            display: inline-block;
+            height: auto;
+            min-width: 0;
+        }
+        .section.selected-games .btn-remove-game:hover {
+            background: rgba(220, 53, 69, 0.22);
+            border-color: #e4606d;
+        }
+        .section.selected-games .btn-users {
+            filter: hue-rotate(45deg) saturate(1.5);
+        }
+        .same-game-users-list {
+            position: absolute;
+            top: 0;
+            left: 100%;
+            margin-left: 4px;
+            min-width: 140px;
+            max-width: 180px;
+            background: rgba(120, 80, 200, 0.10); 
+            border-radius: 8px;
+            border: 1.2px solid rgba(7, 247, 175, 0.18);
+            box-shadow: 0 2px 8px 0 rgba(7, 247, 175, 0.10);
+            padding: 0.5rem 0.7rem 0.5rem 0.7rem;
+            z-index: 2000;
+            margin: 0;
+            display: none;
+            font-size: 0.92em;
+        }
+        .same-game-users-list ul {
+            margin: 0;
+            padding: 0;
+            list-style: disc;
+            font-size: 0.92em;
+        }
+        .same-game-users-list li {
+            font-size: 0.91em;
+            padding: 0.08em 0.1em;
+            margin-bottom: 0.08em;
+        }
+        .show-message-form-btn {
+            background: none;
+            border: 1px solid #07f7af;
+            color: #07bfa7;
+            border-radius: 5px;
+            padding: 0.15em 0.7em;
+            font-size: 0.95em;
+            margin-left: 0.5rem;
+            cursor: pointer;
+            transition: background 0.2s, border 0.2s;
+        }
+        .show-message-form-btn:hover {
+            background: rgba(7, 247, 175, 0.13);
+            border-color: #1de9b6;
+        }
+        .user-message-toggle {
+            position: relative;
+            cursor: pointer;
+            color: #0099ff;
+        }
+        
+        /* 없는 게임 문의 버튼 스타일 */
+        .inquiry-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #07f7af;
+            color: #333;
+            border: none;
+            border-radius: 50px;
+            padding: 12px 20px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(7, 247, 175, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .inquiry-button:hover {
+            background-color: #05d89c;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(7, 247, 175, 0.4);
+        }
+        
+        /* 문의 모달 스타일 */
+        .inquiry-modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+        
+        .inquiry-modal-content {
+            background-color: rgba(91, 61, 119, 0.95);
+            margin: 15% auto;
+            padding: 2rem;
+            border: 2px solid #07f7af;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+        }
+        
+        .inquiry-modal-header {
+            color: #07f7af;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        
+        .inquiry-modal-body {
+            margin-bottom: 1.5rem;
+        }
+        
+        .inquiry-textarea {
+            width: 100%;
+            height: 120px;
+            padding: 1rem;
+            border: 1px solid #07f7af;
+            border-radius: 5px;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #07f7af;
+            font-size: 14px;
+            resize: vertical;
+            box-sizing: border-box;
+        }
+        
+        .inquiry-textarea::placeholder {
+            color: rgba(7, 247, 175, 0.6);
+        }
+        
+        .inquiry-modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+        
+        .inquiry-btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .inquiry-btn-primary {
+            background-color: #07f7af;
+            color: #333;
+        }
+        
+        .inquiry-btn-primary:hover {
+            background-color: #05d89c;
+        }
+        
+        .inquiry-btn-secondary {
+            background-color: transparent;
+            color: #07f7af;
+            border: 1px solid #07f7af;
+        }
+        
+        .inquiry-btn-secondary:hover {
+            background-color: rgba(7, 247, 175, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <!-- 우측 상단 네비게이션 -->
+    <div class="top-nav">
+        <a href="#" onclick="navigateWithAuth('/')">홈으로</a>
+        <a href="#" onclick="navigateWithAuth('/members/profile')">내 프로필</a>
+        <a href="#" onclick="navigateWithAuth('/messages')">메시지</a>
+        <a href="#" onclick="handleLogout()">로그아웃</a>
+    </div>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>게임 목록</h1>
+           
+        </div>
+
+        <!-- 내가 선택한 게임 섹션 -->
+        <div th:if="${!#lists.isEmpty(userGames)}" class="section selected-games">
+            <h2 class="selected-games-title">내가 선택한 게임(최대 5개 까지 선택 가능)</h2>
+            <ul class="game-list">
+                <li th:each="game, gameStat : ${userGames}" class="game-list-item owned" th:attr="data-game-id=${game.id}">
+                    <span class="game-title" th:text="${game.name}"></span>
+                    <div class="game-actions">
+                        <button type="button" class="btn-remove-game" th:onclick="'removeGameFromCollection(' + ${game.id} + ')'">🗑️</button>
+                        <button type="button" class="btn-users toggle-users-btn" th:attr="data-game-id=${game.id}">👤+</button>
+                    </div>
+                    <!-- 유저 목록 (초기에는 숨김) -->
+                    <div class="same-game-users-list" th:attr="id='users-for-game-' + ${game.id}" style="display: none;">
+                        <ul style="margin: 0; padding: 0; list-style: disc;">
+                            <li th:if="${#lists.isEmpty(sameGameUsersMap[game.id])}" style="margin-bottom: 0.2rem; position: relative;">😭 No user</li>
+                            <li th:each="user, userStat : ${sameGameUsersMap[game.id]}" style="margin-bottom: 0.2rem; position: relative;">
+                                <a class="user-message-toggle"
+                                   th:href="@{/messages/{id}(id=${user.id})}"
+                                   th:text="|${user.nickname != null ? user.nickname : user.username} (${user.country})|"
+                                   title="클릭하여 대화하기"></a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+        <!-- 검색 섹션 -->
+        <div class="search-section">
+            <form id="searchForm" class="search-form">
+                <input type="text" name="search" th:value="${search}" 
+                       placeholder="게임 이름으로 검색..." class="search-input">
+                <button type="submit" class="search-button">검색</button>
+            </form>
+            <div class="stats" th:if="${search != null and search != ''}">
+                총 <span th:text="${totalElements}">0</span>개의 게임이 있습니다.
+                <span>
+                    "<span th:text="${search}"></span>" 검색 결과
+                </span>
+            </div>
+        </div>
+
+        <!-- 게임 목록(검색 결과만) -->
+        <div th:if="${search != null and search != ''}">
+            <div th:if="${#lists.isEmpty(games)}" class="no-games">
+                <p>표시할 게임이 없습니다.</p>
+                <p>다른 검색어를 시도해보세요.</p>
+            </div>
+
+            <ul th:if="${!#lists.isEmpty(games)}" class="game-list">
+                <li th:each="game : ${games}" th:class="${game.userHasGame ? 'game-list-item owned' : 'game-list-item'}">
+                    <span class="game-name" th:text="${game.name}"></span>
+                    <div class="game-actions">
+                        <button th:if="${!game.userHasGame}" 
+                                class="btn-add-game" 
+                                th:onclick="'addGameToCollection(' + ${game.id} + ')'">
+                            추가
+                        </button>
+                        <button th:if="${game.userHasGame}" 
+                                class="btn-remove-game" 
+                                th:onclick="'removeGameFromCollection(' + ${game.id} + ')'">
+                            제거
+                        </button>
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+        <!-- 페이지네이션 -->
+        <div th:if="${hasResults and totalPages > 0}" class="pagination">
+            <a th:if="${currentPage > 0}" 
+               href="#" 
+               th:data-page="${currentPage - 1}"
+               th:data-search="${search}"
+               class="pagination-link">이전</a>
+            
+            <!-- 페이지 번호 표시 (최대 10개) -->
+            <span th:with="startPage=${currentPage > 4 ? currentPage - 4 : 0}, endPage=${startPage + 9 > totalPages - 1 ? totalPages - 1 : startPage + 9}">
+                <span th:each="pageNum : ${#numbers.sequence(startPage, endPage)}" 
+                      th:class="${pageNum == currentPage ? 'current' : ''}">
+                    <a th:if="${pageNum != currentPage}" 
+                       href="#" 
+                       th:data-page="${pageNum}"
+                       th:data-search="${search}"
+                       class="pagination-link"
+                       th:text="${pageNum + 1}">1</a>
+                    <span th:if="${pageNum == currentPage}" th:text="${pageNum + 1}">1</span>
+                </span>
+            </span>
+            
+            <a th:if="${currentPage < totalPages - 1}" 
+               href="#" 
+               th:data-page="${currentPage + 1}"
+               th:data-search="${search}"
+               class="pagination-link">다음</a>
+        </div>
+    </div>
+
+    <!-- 없는 게임 문의 버튼 -->
+    <button class="inquiry-button" onclick="openInquiryModal()">
+        없는 게임 문의
+    </button>
+
+    <!-- 문의 모달 -->
+    <div id="inquiryModal" class="inquiry-modal">
+        <div class="inquiry-modal-content">
+            <div class="inquiry-modal-header">
+                없는 게임 문의
+            </div>
+            <div class="inquiry-modal-body">
+                <textarea id="inquiryContent" class="inquiry-textarea" 
+                         placeholder="찾고 계신 게임이 목록에 없다면 여기에 게임명을 입력해주세요. 빠른 시일 내에 추가하도록 하겠습니다."></textarea>
+            </div>
+            <div class="inquiry-modal-footer">
+                <button class="inquiry-btn inquiry-btn-secondary" onclick="closeInquiryModal()">취소</button>
+                <button class="inquiry-btn inquiry-btn-primary" onclick="sendInquiry()">문의하기</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/auth.js"></script>
+    <script src="/js/apiClient.js"></script>
+    <script>
+        // 검색 폼 처리
+        document.getElementById('searchForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const searchValue = document.querySelector('input[name="search"]').value;
+            // 토큰을 URL에 포함하지 않음
+            window.location.href = `/games/collection?search=${encodeURIComponent(searchValue)}`;
+        });
+        
+        // 페이지네이션 링크 처리
+        document.addEventListener('DOMContentLoaded', function() {
+            const paginationLinks = document.querySelectorAll('.pagination-link');
+            paginationLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const page = this.getAttribute('data-page');
+                    const search = this.getAttribute('data-search');
+                    
+                    // 토큰을 URL에 포함하지 않음
+                    window.location.href = `/games/collection?page=${page}&search=${encodeURIComponent(search)}`;
+                });
+            });
+        });
+        
+        // 게임을 컬렉션에 추가하는 함수
+        async function addGameToCollection(gameId) {
+            try {
+                // API 호출 - Authorization 헤더로 토큰 전송
+                const response = await apiClient.postForm(`/games/collection/add-game`, { gameId }, { auth: true });
+                
+                if (response.ok) {
+                    // 성공 시 페이지 새로고침
+                    window.location.reload();
+                } else if (response.status === 400) {
+                    // 최대 5개 초과 등 사용자 메시지
+                    const msg = await response.text();
+                    alert(msg || '최대 5개까지 선택 가능합니다, 기존 게임을 삭제하고 다시 추가해주세요.');
+                } else {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('게임 추가 중 오류가 발생했습니다: ' + error.message);
+            }
+        }
+        
+        // 게임을 컬렉션에서 제거하는 함수
+        async function removeGameFromCollection(gameId) {
+            if (!confirm('정말로 이 게임을 컬렉션에서 제거하시겠습니까?')) {
+                return;
+            }
+            
+            try {
+                // API 호출 - Authorization 헤더로 토큰 전송
+                const response = await apiClient.postForm(`/games/collection/remove-game`, { gameId }, { auth: true });
+                
+                if (response.ok) {
+                    // 성공 시 DOM에서 항목을 비동기적으로 제거
+                    const selector = `.section.selected-games li.game-list-item.owned[data-game-id="${gameId}"]`;
+                    const li = document.querySelector(selector);
+                    if (li) {
+                        const list = li.closest('ul');
+                        li.remove();
+                        if (list && list.children.length === 0) {
+                            const section = document.querySelector('.section.selected-games');
+                            if (section) section.style.display = 'none';
+                        }
+                    }
+                } else {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('게임 제거 중 오류가 발생했습니다: ' + error.message);
+            }
+        }
+    </script>
+    <script>
+// 게임별 유저 목록 토글 (팝오버를 화면 오른쪽에 고정, 버튼 위치에 맞춰 top 조정)
+// JS에서 팝오버 위치 계산/설정 코드 모두 제거
+const userToggleBtns = document.querySelectorAll('.toggle-users-btn');
+userToggleBtns.forEach(btn => {
+    btn.addEventListener('click', function() {
+        const gameId = btn.getAttribute('data-game-id');
+        const userListDiv = document.getElementById('users-for-game-' + gameId);
+        // 모든 유저 목록 닫기
+        document.querySelectorAll('.same-game-users-list').forEach(div => {
+            if (div !== userListDiv) div.style.display = 'none';
+        });
+        // 토글
+        userListDiv.style.display = (userListDiv.style.display === 'none' || userListDiv.style.display === '') ? 'block' : 'none';
+    });
+});
+// robust 이벤트 위임 방식으로 유저별 메시지 폼 토글
+// (동적으로 생성/토글되는 요소에도 항상 동작)
+document.addEventListener('click', function(e) {
+    // 유저 span 클릭 - 이제 직접 대화창으로 이동하므로 별도 처리 불필요
+});
+
+// 문의 모달 열기
+function openInquiryModal() {
+    document.getElementById('inquiryModal').style.display = 'block';
+    document.getElementById('inquiryContent').focus();
+}
+
+// 문의 모달 닫기
+function closeInquiryModal() {
+    document.getElementById('inquiryModal').style.display = 'none';
+    document.getElementById('inquiryContent').value = '';
+}
+
+// 문의하기 메시지 전송
+async function sendInquiry() {
+    const content = document.getElementById('inquiryContent').value.trim();
+    
+    if (!content) {
+        alert('문의 내용을 입력해주세요.');
+        return;
+    }
+    
+    try {
+        const response = await apiClient.postForm('/messages/inquiry', {
+            content: content
+        }, { auth: true });
+        
+        const result = await response.text();
+        
+        if (result === 'success') {
+            alert('문의가 성공적으로 전송되었습니다.');
+            closeInquiryModal();
+        } else {
+            alert('문의 전송 중 오류가 발생했습니다: ' + result);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('문의 전송 중 오류가 발생했습니다.');
+    }
+}
+
+// 모달 외부 클릭 시 닫기
+window.onclick = function(event) {
+    const modal = document.getElementById('inquiryModal');
+    if (event.target === modal) {
+        closeInquiryModal();
+    }
+}
+</script>
+</body>
+</html> 

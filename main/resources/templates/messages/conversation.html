@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReadyPlz - 대화</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/js/apiClient.js"></script>
+    <script src="/js/auth.js"></script>
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background-color: #5b3d77;
+        }
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 2rem;
+            background-color: rgba(7, 118, 161, 0.1);
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 100px);
+            backdrop-filter: blur(10px);
+        }
+        .conversation-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .conversation-header h1 {
+            color: #07f7af;
+            margin-bottom: 1rem;
+        }
+        .message-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+        .message {
+            margin-bottom: 1rem;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            max-width: 70%;
+        }
+        .message.sent {
+            background-color: #07f7af;
+            color: #333;
+            margin-left: auto;
+        }
+        .message.received {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #07f7af;
+        }
+        .message-meta {
+            font-size: 0.8rem;
+            margin-bottom: 0.25rem;
+            opacity: 0.7;
+        }
+        .message-content {
+            word-break: break-word;
+        }
+        .message-form {
+            display: flex;
+            gap: 1rem;
+        }
+        .message-input {
+            flex-grow: 1;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+        .send-button {
+            padding: 0.75rem 1.5rem;
+            background-color: #07f7af;
+            color: #333;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .send-button:hover {
+            background-color: #05d89c;
+        }
+        .nav-links {
+            text-align: center;
+            margin-top: 1rem;
+        }
+        .nav-links a {
+            color: #07f7af;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+        .pagination {
+            text-align: center;
+            margin-top: 0.75rem;
+        }
+        .pagination a, .pagination span {
+            display: inline-block;
+            margin: 0 6px;
+            padding: 6px 10px;
+            color: #07f7af;
+            text-decoration: none;
+            border: 1px solid rgba(7, 247, 175, 0.4);
+            border-radius: 4px;
+            background-color: rgba(255, 255, 255, 0.06);
+        }
+        .pagination a:hover {
+            background-color: rgba(255, 255, 255, 0.15);
+        }
+        .pagination .current {
+            color: #333;
+            background-color: #07f7af;
+            border-color: #07f7af;
+            font-weight: 700;
+        }
+        
+        /* 우측 상단 네비게이션 */
+        .top-nav {
+            position: fixed;
+            top: 0;
+            right: 0;
+            padding: 1rem;
+            z-index: 1000;
+        }
+        .top-nav a {
+            color: #07f7af;
+            text-decoration: none;
+            margin-left: 1rem;
+            padding: 0.5rem 1rem;
+            border: 2px solid #07f7af;
+            border-radius: 4px;
+            background-color: rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+        .top-nav a:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: #05d89c;
+            border-color: #05d89c;
+        }
+    </style>
+</head>
+<body>
+    <!-- 우측 상단 네비게이션 -->
+    <div class="top-nav">
+        <a href="#" onclick="navigateWithAuth('/')">홈으로</a>
+        <a href="#" onclick="handleLogout()">로그아웃</a>
+    </div>
+
+    <div class="container">
+        <div class="conversation-header">
+            <h1>대화</h1>
+            <p th:if="${isLimitReached}" style="color: #ff6b6b; font-weight: bold; margin: 0.5rem 0;">⚠️ 메시지 저장 한도에 도달했습니다!</p>
+        </div>
+
+        <div class="message-container" id="messageContainer">
+            <div th:each="message : ${conversation}" 
+                 th:class="${message.senderId == currentMemberId} ? 'message sent' : 'message received'">
+                <div class="message-meta">
+                    <span th:text="${message.senderNickname}"></span> |
+                    <span th:text="${#temporals.format(message.createdAt, 'yyyy-MM-dd HH:mm')}"></span>
+                </div>
+                <div class="message-content" th:text="${message.content}"></div>
+            </div>
+        </div>
+
+        <div class="pagination" th:if="${conversationPage != null and conversationPage.totalPages > 1}">
+            <a th:if="${conversationPage.hasPrevious()}"
+               th:href="@{/messages/{otherId}(otherId=${otherMemberId}, page=${conversationPage.number - 1}, size=${conversationPage.size}, sort=${'createdAt,ASC'})}">이전</a>
+            <span th:each="i : ${#numbers.sequence(0, conversationPage.totalPages - 1)}">
+                <a th:if="${i != conversationPage.number}"
+                   th:text="${i + 1}"
+                   th:href="@{/messages/{otherId}(otherId=${otherMemberId}, page=${i}, size=${conversationPage.size}, sort=${'createdAt,ASC'})}"></a>
+                <span th:if="${i == conversationPage.number}" class="current" th:text="${i + 1}"></span>
+            </span>
+            <a th:if="${conversationPage.hasNext()}"
+               th:href="@{/messages/{otherId}(otherId=${otherMemberId}, page=${conversationPage.number + 1}, size=${conversationPage.size}, sort=${'createdAt,ASC'})}">다음</a>
+        </div>
+
+        <form class="message-form" id="messageForm">
+            <input type="text" class="message-input" id="messageInput" placeholder="메시지를 입력하세요..." required>
+            <button type="submit" class="send-button" id="sendButton">전송</button>
+        </form>
+
+    </div>
+
+    <script src="/js/auth.js"></script>
+    <script src="/js/apiClient.js"></script>
+    <script th:inline="javascript">
+        const messageContainer = document.getElementById('messageContainer');
+        const messageForm = document.getElementById('messageForm');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        const otherMemberId = /*[[${otherMemberId}]]*/ null;
+        const isLimitReached = /*[[${isLimitReached}]]*/ false;
+
+        // 페이지 로드 시 스크롤을 최하단으로 이동
+        messageContainer.scrollTop = messageContainer.scrollHeight;
+        
+        // 메시지 한도에 도달한 경우 입력창과 버튼 비활성화
+        if (isLimitReached) {
+            messageInput.disabled = true;
+            messageInput.placeholder = "메시지 저장 한도에 도달했습니다.";
+            sendButton.disabled = true;
+            sendButton.textContent = "전송 불가";
+            sendButton.style.backgroundColor = "#ccc";
+        }
+
+        messageForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // 메시지 한도에 도달한 경우 전송 차단
+            if (isLimitReached) {
+                alert("메시지 저장 한도(1000개)에 도달했습니다. 더 이상 메시지를 보낼 수 없습니다.");
+                return;
+            }
+            
+            const content = messageInput.value.trim();
+            if (!content) {
+                alert('메시지 내용을 입력해주세요.');
+                return;
+            }
+
+            // otherMemberId가 유효한지 확인
+            if (!otherMemberId || otherMemberId === 'null' || otherMemberId === null) {
+                alert('유효하지 않은 수신자입니다.');
+                return;
+            }
+
+            try {
+                // JWT 토큰을 포함한 요청 헤더 생성
+                const response = await apiClient.postForm('/messages/send', {
+                    receiverId: otherMemberId,
+                    content: content
+                }, { auth: true });
+
+                const result = await response.text();
+                console.log('메시지 전송 응답:', result);
+                
+                if (result === 'success') {
+                    // 메시지 전송 성공 시 입력창 초기화
+                    messageInput.value = '';
+                    // 페이지 새로고침
+                    location.reload();
+                } else {
+                    // 서버에서 반환된 에러 메시지 표시
+                    alert(result);
+                }
+            } catch (error) {
+                console.error('메시지 전송 오류:', error);
+                alert('메시지 전송 중 오류가 발생했습니다.');
+            }
+        });
+    </script>
+</body>
+</html> 
