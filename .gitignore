@@ -1,24 +1,57 @@
-# Compiled class file
+### Gradle ###
+.gradle/
+build/
+
+### 컴파일·실행 산출물 ###
 *.class
-
-# Log file
-*.log
-
-# BlueJ files
-*.ctxt
-
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
-
-# Package Files #
 *.jar
+!gradle/wrapper/gradle-wrapper.jar
 *.war
 *.nar
 *.ear
+hs_err_pid*
+replay_pid*
+
+### 패키지·아카이브 (라이브러리 배포물 제외 시) ###
 *.zip
 *.tar.gz
 *.rar
 
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
-hs_err_pid*
-replay_pid*
+### 로그 ###
+*.log
+
+### OS ###
+.DS_Store
+Thumbs.db
+
+### IDE — IntelliJ ###
+.idea/
+*.iml
+*.ipr
+*.iws
+
+### IDE — Eclipse ###
+.apt_generated/
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache/
+
+### IDE — VS Code (로컬 전용; 팀 공유 설정은 예외로 두려면 아래 줄 제거) ###
+.vscode/
+
+### IDE — NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+### 기타 ###
+*.ctxt
+.mtj.tmp/
+
+### 로컬 전용 설정 (JWT 등 비밀값) ###
+src/main/resources/application-local.properties
