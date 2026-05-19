@@ -721,13 +721,13 @@ async function sendInquiry() {
             content: content
         }, { auth: true });
         
-        const result = await response.text();
+        const data = await response.json();
         
-        if (result === 'success') {
+        if (response.ok && data.message === 'success') {
             alert('문의가 성공적으로 전송되었습니다.');
             closeInquiryModal();
         } else {
-            alert('문의 전송 중 오류가 발생했습니다: ' + result);
+            alert(data.message || '문의 전송 중 오류가 발생했습니다.');
         }
     } catch (error) {
         console.error('Error:', error);

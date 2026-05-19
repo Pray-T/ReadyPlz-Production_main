@@ -98,7 +98,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 UserDetails userDetails = this.userDetailsService.loadUserByUsername(username); //사용자 상세 정보 로드
                 // log.debug("사용자 상세 정보 로드: {}", username);
                 
-                if (jwtTokenUtil.validateToken(jwt, userDetails)) {
+                if (jwtTokenUtil.validateToken(jwt, userDetails)
+                        && tokenService.isActiveAccessToken(username, jwt)) {
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities()); //인증 토큰 생성
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request)); 
                     SecurityContextHolder.getContext().setAuthentication(authToken);  

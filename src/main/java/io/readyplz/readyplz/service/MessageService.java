@@ -4,6 +4,7 @@ import io.readyplz.readyplz.config.MessageRetentionProperties;
 import io.readyplz.readyplz.domain.Member;
 import io.readyplz.readyplz.domain.Message;
 import io.readyplz.readyplz.dto.summary.ConversationSummaryDTO;
+import io.readyplz.readyplz.repository.MemberGameRepository;
 import io.readyplz.readyplz.repository.MemberRepository;
 import io.readyplz.readyplz.repository.MessageRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,10 +26,21 @@ public class MessageService {
 
 	private final MessageRepository messageRepository;
 	private final MemberRepository memberRepository;
+	private final MemberGameRepository memberGameRepository;
 	private final MessageRetentionProperties messageRetentionProperties;
 
 	@Transactional
 	public Message sendMessage(Long senderId, Long receiverId, String content) {
+		String trimmed = content == null ? "" : content.trim();
+		if (trimmed.isEmpty()) {
+			throw new IllegalArgumentException("메시지 내용을 입력해주세요.");
+		}
+		if (trimmed.length() > 1000) {
+			throw new IllegalArgumentException("메시지는 1000자 이하여야 합니다.");
+		}
+
+		assertCanSendDirectMessage(senderId, receiverId);
+
 		Member sender = memberRepository.findById(Objects.requireNonNull(senderId))
 				.orElseThrow(() -> new IllegalArgumentException("발신자를 찾을 수 없습니다."));
 		Member receiver = memberRepository.findById(Objects.requireNonNull(receiverId))
@@ -36,17 +48,45 @@ public class MessageService {
 
 		ensureConversationMessageLimit(senderId, receiverId);
 
-		Message message = Message.create(sender, receiver, content);
-
+		Message message = Message.create(sender, receiver, trimmed);
 		return messageRepository.save(Objects.requireNonNull(message));
 	}
 
-	public Page<io.readyplz.readyplz.dto.summary.MessageSummaryDTO> getSentMessages(Long memberId, Pageable pageable) {
-		return messageRepository.findBySenderId(memberId, pageable);
+	public void assertCanViewConversation(Long memberId, Long otherMemberId) {
+		if (memberId.equals(otherMemberId)) {
+			throw new IllegalArgumentException("자기 자신과는 대화할 수 없습니다.");
+		}
+		Member other = memberRepository.findById(Objects.requireNonNull(otherMemberId))
+				.orElseThrow(() -> new IllegalArgumentException("대화 상대를 찾을 수 없습니다."));
+		if (hasExistingConversation(memberId, otherMemberId)) {
+			return;
+		}
+		if (memberGameRepository.existsSharedGame(memberId, otherMemberId)) {
+			return;
+		}
+		if (hasAdminRole(other)) {
+			return;
+		}
+		throw new IllegalArgumentException("대화에 접근할 권한이 없습니다.");
 	}
 
-	public Page<io.readyplz.readyplz.dto.summary.MessageSummaryDTO> getReceivedMessages(Long memberId, Pageable pageable) {
-		return messageRepository.findByReceiverId(memberId, pageable);
+	public void assertCanSendDirectMessage(Long senderId, Long receiverId) {
+		if (senderId.equals(receiverId)) {
+			throw new IllegalArgumentException("자기 자신에게는 메시지를 보낼 수 없습니다.");
+		}
+		memberRepository.findById(Objects.requireNonNull(receiverId))
+				.orElseThrow(() -> new IllegalArgumentException("수신자를 찾을 수 없습니다."));
+		if (hasExistingConversation(senderId, receiverId)) {
+			return;
+		}
+		if (memberGameRepository.existsSharedGame(senderId, receiverId)) {
+			return;
+		}
+		Member receiver = memberRepository.findById(receiverId).orElseThrow();
+		if (hasAdminRole(receiver)) {
+			return;
+		}
+		throw new IllegalArgumentException("메시지를 보낼 권한이 없습니다. 같은 게임을 보유한 사용자에게만 보낼 수 있습니다.");
 	}
 
 	public Page<io.readyplz.readyplz.dto.summary.MessageSummaryDTO> getConversation(Long memberId1, Long memberId2, Pageable pageable) {
@@ -56,6 +96,20 @@ public class MessageService {
 	public Page<ConversationSummaryDTO> getConversations(Long userId, Pageable pageable) {
 		Page<Object[]> page = messageRepository.findConversationsForUser(userId, pageable);
 		return page.map(this::mapConversationRow);
+	}
+
+	public boolean isConversationLimitReached(Long memberId1, Long memberId2) {
+		long count = messageRepository.countConversationBetween(memberId1, memberId2);
+		return count >= messageRetentionProperties.getMaxPerConversation();
+	}
+
+	private boolean hasExistingConversation(Long memberId1, Long memberId2) {
+		return messageRepository.countConversationBetween(memberId1, memberId2) > 0;
+	}
+
+	private boolean hasAdminRole(Member member) {
+		return member.getRoles().stream()
+				.anyMatch(role -> "ROLE_ADMIN".equals(role.getName()));
 	}
 
 	private ConversationSummaryDTO mapConversationRow(Object[] row) {
@@ -80,12 +134,6 @@ public class MessageService {
 		}
 		long unreadCount = row[5] == null ? 0L : ((Number) row[5]).longValue();
 		return new ConversationSummaryDTO(otherMemberId, otherMemberNickname, lastMessageContent, lastMessageTime, isLastFromMe, unreadCount);
-	}
-
-	/** 현재 사용자와 상대 간 대화 메시지 수가 설정 상한 이상인지 */
-	public boolean isConversationLimitReached(Long memberId1, Long memberId2) {
-		long count = messageRepository.countConversationBetween(memberId1, memberId2);
-		return count >= messageRetentionProperties.getMaxPerConversation();
 	}
 
 	private void ensureConversationMessageLimit(Long senderId, Long receiverId) {

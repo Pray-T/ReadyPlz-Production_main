@@ -38,6 +38,15 @@ public class TokenService {
         return redisTemplate.opsForValue().get(key);
     }
 
+    /** Redis에 저장된 활성 access token과 일치하는지 확인 */
+    public boolean isActiveAccessToken(String username, String token) {
+        if (username == null || username.isBlank() || token == null || token.isBlank()) {
+            return false;
+        }
+        String stored = getAccessToken(username);
+        return token.equals(stored);
+    }
+
     // 리프레시 토큰 조회
     public String getRefreshToken(String username) {
         String key = REFRESH_TOKEN_PREFIX + username;

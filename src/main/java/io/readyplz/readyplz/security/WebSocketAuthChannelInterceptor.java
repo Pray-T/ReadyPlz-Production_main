@@ -17,6 +17,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 
+import java.util.Map;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -31,35 +33,48 @@ public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
 
         if (StompCommand.CONNECT.equals(accessor.getCommand())) {
-            String authHeader = accessor.getFirstNativeHeader("Authorization");
-            if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                String jwt = authHeader.substring(7);
-                try {
-                    // 블랙리스트 토큰 거부
-                    if (tokenService.isBlacklisted(jwt)) {
-                        throw new IllegalStateException("Blacklisted token");
-                    }
-
-                    String username = jwtTokenUtil.extractUsername(jwt);
-                    UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-                    if (jwtTokenUtil.validateToken(jwt, userDetails)) {
-                        Authentication auth = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                        SecurityContextHolder.getContext().setAuthentication(auth);
-                        accessor.setUser(auth);
-                    } else {
-                        throw new IllegalStateException("Invalid token");
-                    }
-                } catch (Exception e) {
-                    log.warn("WebSocket CONNECT 인증 실패: {}", e.getMessage());
-                    throw new IllegalStateException("WebSocket authentication failed");
+            String jwt = resolveJwt(accessor);
+            if (jwt == null || jwt.isBlank()) {
+                log.warn("WebSocket CONNECT에 유효한 access token이 없습니다.");
+                throw new IllegalStateException("Missing access token");
+            }
+            try {
+                if (tokenService.isBlacklisted(jwt)) {
+                    throw new IllegalStateException("Blacklisted token");
                 }
-            } else {
-                log.warn("WebSocket CONNECT에 Authorization 헤더가 없습니다.");
-                throw new IllegalStateException("Missing Authorization header");
+
+                String username = jwtTokenUtil.extractUsername(jwt);
+                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                if (jwtTokenUtil.validateToken(jwt, userDetails)
+                        && tokenService.isActiveAccessToken(username, jwt)) {
+                    Authentication auth = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                    SecurityContextHolder.getContext().setAuthentication(auth);
+                    accessor.setUser(auth);
+                } else {
+                    throw new IllegalStateException("Invalid token");
+                }
+            } catch (Exception e) {
+                log.warn("WebSocket CONNECT 인증 실패: {}", e.getMessage());
+                throw new IllegalStateException("WebSocket authentication failed");
             }
         }
 
         return message;
+    }
+
+    private String resolveJwt(StompHeaderAccessor accessor) {
+        String authHeader = accessor.getFirstNativeHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            return authHeader.substring(7);
+        }
+        Map<String, Object> sessionAttributes = accessor.getSessionAttributes();
+        if (sessionAttributes != null) {
+            Object token = sessionAttributes.get(WebSocketCookieHandshakeInterceptor.ACCESS_TOKEN_SESSION_ATTR);
+            if (token instanceof String s && !s.isBlank()) {
+                return s;
+            }
+        }
+        return null;
     }
 }
 

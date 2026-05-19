@@ -32,6 +32,8 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     // nickname 중복 여부 확인
     boolean existsByNickname(String nickname);
 
+    boolean existsByNicknameAndIdNot(String nickname, Long id);
+
     Optional<Member> findByResetToken(String resetToken);
 
     /** 역할명으로 회원 조회 (정렬 후 상위 N건 — 관리자 단일 조회용) */

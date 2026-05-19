@@ -68,9 +68,13 @@ public interface MemberGameRepository extends JpaRepository<MemberGame, Long> { 
 
     
      //회원이 가진 게임들을 DTO로 직접 조회하여 N+1 문제를 방지합니다.
-    @Query("select new io.readyplz.readyplz.dto.SteamGameDetailDTO(g.appid, g.name, (case when g.releaseDate is not null then year(g.releaseDate) else null end), g.headerImageUrl) " +
+    @Query("select new io.readyplz.readyplz.dto.SteamGameDetailDTO(g.id, g.appid, g.name, (case when g.releaseDate is not null then year(g.releaseDate) else null end), g.headerImageUrl) " +
            "from MemberGame mg join mg.game g where mg.member = :member")
     List<io.readyplz.readyplz.dto.SteamGameDetailDTO> findGameDetailsByMember(@Param("member") Member member);
+
+    @Query("SELECT CASE WHEN COUNT(mg1) > 0 THEN true ELSE false END FROM MemberGame mg1, MemberGame mg2 "
+            + "WHERE mg1.member.id = :memberId1 AND mg2.member.id = :memberId2 AND mg1.game = mg2.game")
+    boolean existsSharedGame(@Param("memberId1") Long memberId1, @Param("memberId2") Long memberId2);
 
     /** 특정 게임을 가진 회원들을 요약 DTO로 조회 (N+1 방지) */
     @Query("select new io.readyplz.readyplz.dto.summary.MemberSummaryDTO(m.id, m.username, m.nickname, m.country) " +

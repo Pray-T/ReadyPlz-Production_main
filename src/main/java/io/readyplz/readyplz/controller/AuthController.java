@@ -86,7 +86,6 @@ public class AuthController {
                 .build();
 
             Map<String, Object> body = new HashMap<>();
-            body.put("accessToken", accessToken);
             body.put("username", username);
             body.put("message", "로그인 성공");
 
@@ -180,6 +179,12 @@ public class AuthController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body);
             }
 
+            if (tokenService.isBlacklisted(refreshToken)) {
+                Map<String, Object> errorBody = new HashMap<>();
+                errorBody.put("message", "무효화된 리프레시 토큰입니다");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorBody);
+            }
+
             // 리프레시 토큰 검증
             if (!jwtTokenUtil.isRefreshToken(refreshToken)) {
                 Map<String, Object> errorBody = new HashMap<>();
@@ -202,6 +207,20 @@ public class AuthController {
                 Map<String, Object> errorBody = new HashMap<>();
                 errorBody.put("message", "재사용 혹은 위조된된 리프레시 토큰입니다");
                 return ResponseEntity.badRequest().body(errorBody);
+            }
+
+            // 이전 access token 무효화 (쿠키)
+            String previousAccessToken = null;
+            if (cookies != null) {
+                for (Cookie c : cookies) {
+                    if ("accessToken".equals(c.getName())) {
+                        previousAccessToken = c.getValue();
+                        break;
+                    }
+                }
+            }
+            if (previousAccessToken != null && !previousAccessToken.isBlank()) {
+                tokenService.addToBlacklist(previousAccessToken, jwtProperties.getAccessTokenValidity());
             }
 
             // 새로운 액세스 토큰과 리프레시 토큰 생성 (Rotation)
@@ -229,7 +248,6 @@ public class AuthController {
                 .build();
 
             Map<String, Object> body = new HashMap<>();
-            body.put("accessToken", newAccessToken);
             body.put("username", username);
             body.put("message", "토큰 갱신 성공");
 
@@ -239,9 +257,9 @@ public class AuthController {
                 .body(body);
 
         } catch (Exception e) {
-            log.error("토큰 갱신 실패: {}", e.getMessage());
+            log.error("토큰 갱신 실패: {}", e.getMessage(), e);
             Map<String, Object> errorBody = new HashMap<>();
-            errorBody.put("message", "토큰 갱신 실패: " + e.getMessage());
+            errorBody.put("message", "토큰 갱신에 실패했습니다.");
             return ResponseEntity.badRequest().body(errorBody);
         }
     }
@@ -272,31 +290,36 @@ public class AuthController {
                 }
             }
 
-            // 2) 사용자명 결정: accessToken 우선, 없으면 refreshToken 쿠키에서 추출 시도
+            // 2) refreshToken 쿠키 추출 및 사용자명 결정 (accessToken 우선)
+            String refreshToken = null;
+            Cookie[] cookies = request.getCookies();
+            if (cookies != null) {
+                for (Cookie c : cookies) {
+                    if ("refreshToken".equals(c.getName())) {
+                        refreshToken = c.getValue();
+                        break;
+                    }
+                }
+            }
+
             String username = null;
             if (accessToken != null && !accessToken.isBlank()) {
                 try {
                     username = jwtTokenUtil.extractUsername(accessToken);
                 } catch (Exception ignored) {}
             }
-            if (username == null) {
-                Cookie[] cookies = request.getCookies();
-                if (cookies != null) {
-                    for (Cookie c : cookies) {
-                        if ("refreshToken".equals(c.getName())) {
-                            String refresh = c.getValue();
-                            try {
-                                username = jwtTokenUtil.extractUsername(refresh);
-                            } catch (Exception ignored) {}
-                            break;
-                        }
-                    }
-                }
+            if (username == null && refreshToken != null && !refreshToken.isBlank()) {
+                try {
+                    username = jwtTokenUtil.extractUsername(refreshToken);
+                } catch (Exception ignored) {}
             }
 
-            // 토큰을 블랙리스트에 추가
+            // access·refresh 토큰 블랙리스트 등록 (Redis 삭제 전에 무효화)
             if (accessToken != null && !accessToken.isBlank()) {
                 tokenService.addToBlacklist(accessToken, jwtProperties.getAccessTokenValidity());
+            }
+            if (refreshToken != null && !refreshToken.isBlank()) {
+                tokenService.addToBlacklist(refreshToken, jwtProperties.getRefreshTokenValidity());
             }
 
             // 사용자의 모든 토큰 삭제
@@ -329,9 +352,9 @@ public class AuthController {
                 .body(body);
 
         } catch (Exception e) {
-            log.error("로그아웃 실패: {}", e.getMessage());
+            log.error("로그아웃 실패: {}", e.getMessage(), e);
             Map<String, String> errorBody = new HashMap<>();
-            errorBody.put("message", "로그아웃 실패: " + e.getMessage());
+            errorBody.put("message", "로그아웃에 실패했습니다.");
             return ResponseEntity.badRequest().body(errorBody);
         }
     }
@@ -349,8 +372,8 @@ public class AuthController {
             return ResponseEntity.ok(Map.of("message", "토큰이 유효합니다.", "username", username));
 
         } catch (Exception e) {
-            log.error("토큰 검증 실패: {}", e.getMessage());
-            return ResponseEntity.status(401).body(Map.of("message", "토큰 검증 실패: " + e.getMessage()));
+            log.error("토큰 검증 실패: {}", e.getMessage(), e);
+            return ResponseEntity.status(401).body(Map.of("message", "토큰 검증에 실패했습니다."));
         }
     }
 
@@ -385,7 +408,6 @@ public class AuthController {
                 .build();
 
             Map<String, Object> body = new HashMap<>();
-            body.put("accessToken", accessToken);
             body.put("username", username);
             body.put("message", "회원가입 및 로그인 성공");
 

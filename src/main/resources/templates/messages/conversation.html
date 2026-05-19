@@ -244,17 +244,12 @@
                     content: content
                 }, { auth: true });
 
-                const result = await response.text();
-                console.log('메시지 전송 응답:', result);
-                
-                if (result === 'success') {
-                    // 메시지 전송 성공 시 입력창 초기화
+                const data = await response.json();
+                if (response.ok && data.message === 'success') {
                     messageInput.value = '';
-                    // 페이지 새로고침
                     location.reload();
                 } else {
-                    // 서버에서 반환된 에러 메시지 표시
-                    alert(result);
+                    alert(data.message || '메시지 전송에 실패했습니다.');
                 }
             } catch (error) {
                 console.error('메시지 전송 오류:', error);

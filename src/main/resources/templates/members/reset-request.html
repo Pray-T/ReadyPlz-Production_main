@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <title>비밀번호 재설정 요청</title>
@@ -19,6 +19,7 @@
 <div class="container">
     <h2>비밀번호 재설정</h2>
     <form th:action="@{/members/reset-request}" method="post">
+        <sec:csrfInput />
         <label for="email">가입한 이메일 주소</label>
         <input type="email" id="email" name="email" required placeholder="이메일 입력">
         <div th:if="${error}" class="error" th:text="${error}"></div>

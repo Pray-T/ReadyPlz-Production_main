@@ -15,7 +15,7 @@ public class ChangePasswordRequest {
     private String currentPassword;
 
     @NotBlank(message = "password_input_error")
-    @Size(min = 6, message = "password_input_error")
+    @Size(min = 8, max = 20, message = "password_input_error")
     private String newPassword;
 
     @NotBlank(message = "password_input_error")
