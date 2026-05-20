@@ -67,6 +67,11 @@ public class MemberController {
             redirectAttributes.addAttribute("token", token);
             return "redirect:/members/reset-password";
         }
+        if (password.length() < 8 || password.length() > 20) {
+            redirectAttributes.addFlashAttribute("error", "비밀번호는 8~20자 사이여야 합니다.");
+            redirectAttributes.addAttribute("token", token);
+            return "redirect:/members/reset-password";
+        }
 
         try {
             memberService.resetPassword(token, password);

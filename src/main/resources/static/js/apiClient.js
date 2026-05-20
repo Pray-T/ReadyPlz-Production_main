@@ -21,7 +21,10 @@ class ApiClient {
 
 		const finalHeaders = new Headers(headers || {});
 
-		// Authorization 헤더는 기본적으로 사용하지 않음(쿠키 기반). 필요 시 호출부에서 명시적으로 설정.
+		const csrfToken = this.getCsrfToken();
+		if (csrfToken) {
+			finalHeaders.set('X-XSRF-TOKEN', csrfToken);
+		}
 
 		// 기본 Content-Type 처리: body가 FormData가 아니고 명시 안 되었을 때 JSON으로 강제하지 않음
 		// 호출부에서 postJson/postForm 사용 권장
@@ -50,14 +53,11 @@ class ApiClient {
 				return response;
 			}
 
-			// 갱신 결과 확인
-			if (!this.authManager || !this.authManager.accessToken) {
+			if (!this.authManager || !this.authManager.isAuthenticated()) {
 				this.handleAuthFailure(autoRedirectOnAuthError);
 				return response;
 			}
 
-			// 새로운 토큰으로 Authorization 갱신 후 1회 재시도
-			finalHeaders.set('Authorization', `Bearer ${this.authManager.accessToken}`);
 			response = await fetch(url, {
 				credentials: 'include',
 				...rest,
@@ -97,6 +97,11 @@ class ApiClient {
 		})();
 
 		return this.refreshPromise;
+	}
+
+	getCsrfToken() {
+		const match = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]*)/);
+		return match ? decodeURIComponent(match[1]) : null;
 	}
 
 	handleAuthFailure(autoRedirect) {

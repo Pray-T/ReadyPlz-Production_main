@@ -128,7 +128,8 @@ public class MemberService {
         Member member = memberRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
         // 중복 닉네임 체크
-        if (newNickname != null && !newNickname.isBlank() && memberRepository.existsByNickname(newNickname)) {
+        if (newNickname != null && !newNickname.isBlank()
+                && memberRepository.existsByNicknameAndIdNot(newNickname, member.getId())) {
             throw new IllegalArgumentException("이미 존재하는 닉네임입니다.");
         }
         member.changeNickname(newNickname);

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -226,6 +226,7 @@
             </div>
             
             <form th:action="@{/members/profile/confirm-nickname}" method="post">
+                <sec:csrfInput />
                 <div class="form-group">
                     <label for="nickname">닉네임 변경</label>
                     <input type="text" id="nickname" name="nickname" th:value="${member.nickname}" placeholder="12자 이하만 가능합니다, 공백을 사용할 수 없습니다.">
@@ -240,6 +241,7 @@
             
             
                          <form th:action="@{/members/profile/change-password}" method="post" class="password-form" id="passwordChangeForm">
+                             <sec:csrfInput />
                              <div class="form-group">
                                  <label for="currentPassword">현재 비밀번호</label>
                                  <input type="password" id="currentPassword" name="currentPassword" placeholder="현재 비밀번호를 입력하세요" required style="width:100%;">
@@ -280,6 +282,7 @@
             <h3 id="deleteModalTitle">계정 탈퇴 확인</h3>
             <div class="hint">이 작업은 되돌릴 수 없습니다. 본인 확인을 위해 정보를 입력하세요.</div>
             <form id="deleteAccountForm" th:action="@{/members/profile/delete-account}" method="post">
+                <sec:csrfInput />
                 <div class="form-group">
                     <label for="deleteEmail">이메일</label>
                     <input type="email" id="deleteEmail" name="email" placeholder="이메일을 입력하세요" required>
