@@ -11,7 +11,8 @@
 - 이름 : 최성욱
 - 이메일 : cenmot@naver.com
 - 기술 스택 : `Java`, `Spring Boot`, `JPA`, `Spring Security`, `JWT`, `Redis`, `MySQL`, `AWS(EC2, RDS)`
-- 또 다른 포트폴리오:  [이체시스템의 구현을 통한 MySQL의 정합성과 인덱스](https://github.com/Pray-T/BankTranferSys_Backend_Restful.git),
+- 또 다른 포트폴리오:<br>
+[이체시스템의 구현을 통한 MySQL의 정합성과 인덱스](https://github.com/Pray-T/BankTranferSys_Backend_Restful.git) <br>
 [Cursor Agent를 이용하여 GithubCopilot을 저렴하게 사용해보기](https://github.com/Pray-T/GitHub-Copilot-With-Cursor.git)
 
 <br/>
