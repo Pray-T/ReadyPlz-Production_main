@@ -3,31 +3,42 @@ package io.readyplz.readyplz.service;
 import io.readyplz.readyplz.config.MessageRetentionProperties;
 import io.readyplz.readyplz.domain.Member;
 import io.readyplz.readyplz.domain.Message;
+import io.readyplz.readyplz.dto.notification.NotificationDTO;
 import io.readyplz.readyplz.dto.summary.ConversationSummaryDTO;
 import io.readyplz.readyplz.repository.MemberGameRepository;
 import io.readyplz.readyplz.repository.MemberRepository;
 import io.readyplz.readyplz.repository.MessageRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class MessageService {
 
+	private static final String NOTIFICATION_DESTINATION = "/queue/notifications";
+	private static final String MESSAGE_NOTIFICATION_TYPE = "MESSAGE";
+	private static final String MESSAGE_NOTIFICATION_TEXT = "새 메시지가 도착했습니다.";
+
 	private final MessageRepository messageRepository;
 	private final MemberRepository memberRepository;
 	private final MemberGameRepository memberGameRepository;
 	private final MessageRetentionProperties messageRetentionProperties;
+	private final SimpMessagingTemplate messagingTemplate;
 
 	@Transactional
 	public Message sendMessage(Long senderId, Long receiverId, String content) {
@@ -49,7 +60,42 @@ public class MessageService {
 		ensureConversationMessageLimit(senderId, receiverId);
 
 		Message message = Message.create(sender, receiver, trimmed);
-		return messageRepository.save(Objects.requireNonNull(message));
+		Message saved = messageRepository.save(Objects.requireNonNull(message));
+
+		scheduleMessageNotificationAfterCommit(receiver.getUsername(), sender.getNickname());
+		return saved;
+	}
+
+	/**
+	 * DB 커밋 성공 후에만 STOMP 알림을 발행한다.
+	 * 발행 실패는 메시지 저장/HTTP 응답에 영향을 주지 않는다.
+	 */
+	private void scheduleMessageNotificationAfterCommit(String receiverUsername, String senderNickname) {
+		NotificationDTO payload = new NotificationDTO(
+				MESSAGE_NOTIFICATION_TYPE,
+				MESSAGE_NOTIFICATION_TEXT,
+				senderNickname);
+
+		if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+			publishMessageNotification(receiverUsername, payload);
+			return;
+		}
+
+		TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+			@Override
+			public void afterCommit() {
+				publishMessageNotification(receiverUsername, payload);
+			}
+		});
+	}
+
+	private void publishMessageNotification(String receiverUsername, NotificationDTO payload) {
+		try {
+			messagingTemplate.convertAndSendToUser(receiverUsername, NOTIFICATION_DESTINATION, payload);
+			log.info("실시간 메시지 알림 발행: receiver={}, type={}", receiverUsername, payload.type());
+		} catch (Exception e) {
+			log.error("실시간 메시지 알림 발행 실패: receiver={}", receiverUsername, e);
+		}
 	}
 
 	public void assertCanViewConversation(Long memberId, Long otherMemberId) {

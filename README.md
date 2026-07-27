@@ -29,8 +29,8 @@ Steam 게임을 기준으로 함께 플레이할 유저를 찾고, 회원 간 �
 - JWT 발급·갱신·로그아웃: `AuthController` (`/api/auth/**`). 로그인 폼 화면만 `LoginController` (`GET /members/loginForm`)
 - Spring Security: `JwtAuthenticationFilter` + **CSRF 활성**(Cookie CSRF, `/api/**`만 예외)
 - 게임 컬렉션·동일 게임 유저 조회 (Steam 데이터는 JSON → DB 사전 적재, 실시간 Steam API 호출 없음)
-- 회원 1:1 메시징은 **HTTP** (`MessageController`, `POST /messages/send` 등). STOMP `@MessageMapping` 실시간 push는 미구현
-- WebSocket(STOMP/SockJS): 엔드포인트·쿠키 기반 JWT 연결 인증(`WebSocketConfig`, `WebSocketAuthChannelInterceptor`) 구성. Redis는 WebSocket 세션 저장용이 아니라 JWT용
+- 회원 1:1 메시징은 **HTTP** (`MessageController`, `POST /messages/send` 등). `MessageService.sendMessage`가 DB 저장 후 트랜잭션 **afterCommit** 시점에만 `SimpMessagingTemplate.convertAndSendToUser(수신자 username, /queue/notifications, payload)`로 실시간 알림 push. 페이로드는 `NotificationDTO{type, message, data}`(예: `type="MESSAGE"`, `data`=발신자 닉네임)이며, 브로커 발행 실패는 try/catch로 격리되어 저장·HTTP 응답에 영향 없음
+- WebSocket(STOMP/SockJS): 엔드포인트 `/ws-nearby-gamers`, SimpleBroker `/queue`·`/topic`, 유저 접두사 `/user`, 쿠키 기반 JWT 연결 인증(`WebSocketConfig`, `WebSocketAuthChannelInterceptor`, principal 이름=username). Redis는 WebSocket 세션 저장용이 아니라 JWT용
 - 비동기 이메일 비밀번호 재설정 (`EmailService` + `@Async`)
 - ADMIN JSON 게임 적재 (`POST /admin/db/load-json-games`)
 - 프로필: `ProfileController` (`/members/profile`, `confirm-nickname`, `change-password` 등)
