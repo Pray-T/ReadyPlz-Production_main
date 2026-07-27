@@ -24,7 +24,7 @@
 Steam 게임을 기준으로 함께 플레이할 유저를 찾고, 회원 간 메시지를 주고할 수 있는 웹 애플리케이션입니다.  
 패키지 루트는 `io.readyplz.readyplz` 이며, Thymeleaf SSR과 REST API를 함께 사용합니다.
 
-**코드 기준 주요 기능·동작**
+**주요 기능·동작**
 - Access / Refresh 이중 JWT + Redis(활성 토큰·블랙리스트 저장). 기본 만료: Access **1시간**, Refresh **7일** (`application.properties`)
 - JWT 발급·갱신·로그아웃: `AuthController` (`/api/auth/**`). 로그인 폼 화면만 `LoginController` (`GET /members/loginForm`)
 - Spring Security: `JwtAuthenticationFilter` + **CSRF 활성**(Cookie CSRF, `/api/**`만 예외)
@@ -63,8 +63,7 @@ gradlew.bat bootRun --args="--spring.profiles.active=dev"
 ---
 
 ## 상세 문서
-*아래 링크를 클릭하시면 해당 상세 페이지로 이동합니다.*  
-일부 하위 문서는 과거 설계(예: Refresh 12시간, CSRF 비활성, STOMP 실시간 채팅 Pub/Sub)를 포함할 수 있으므로, **현재 구현은 위 ReadyPlz 섹션을 우선**하세요.
+*아래 링크를 클릭하시면 해당 상세 페이지로 이동합니다.*
 
 ### [1. 웹앱 흐름 및 아키텍처 개요](./docs/01-architecture.md)
 전체적인 앱의 아키텍처 개요와 USER / ADMIN 계정 흐름·기능을 설명합니다.
