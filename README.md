@@ -6,11 +6,11 @@
 
 <br/>
 
-##  Profile
+## Profile
 
 - 이름 : 최성욱
 - 이메일 : cenmot@naver.com
-- 기술 스택 : `Java`, `Spring Boot`, `JPA`, `Spring Security`, `JWT`, `Redis`, `MySQL`, `AWS(EC2, RDS)`
+- 기술 스택 : `Java 17`, `Spring Boot 3.2`, `Spring Security`, `JWT`, `Redis`, `MySQL`, `JPA`, `Thymeleaf`, `WebSocket(STOMP)`, `Spring Mail`, `AWS(EC2, ELB, RDS)`
 - 또 다른 포트폴리오:<br>
 [이체시스템의 구현을 통한 MySQL의 정합성과 인덱스](https://github.com/Pray-T/BankTransferSys_Backend_Restful) <br>
 [Cursor Agent를 이용하여 GitHub Copilot을 저렴하게 사용해보기](https://github.com/Pray-T/GitHub-Copilot-With-Cursor)
@@ -19,29 +19,77 @@
 
 ---
 
+## ReadyPlz 프로젝트
+
+Steam 게임을 기준으로 함께 플레이할 유저를 찾고, 회원 간 메시지를 주고할 수 있는 웹 애플리케이션입니다.  
+패키지 루트는 `io.readyplz.readyplz` 이며, Thymeleaf SSR과 REST API를 함께 사용합니다.
+
+**코드 기준 주요 기능**
+- Access / Refresh 이중 JWT + Redis(토큰·블랙리스트)
+- Spring Security 커스텀 필터(`JwtAuthenticationFilter`) 기반 인증·인가
+- 게임 컬렉션·동일 게임 유저 조회 (Steam 게임 데이터는 JSON → DB 사전 적재)
+- 회원 1:1 메시징(`POST /messages/send`) 및 WebSocket(STOMP/SockJS) 연결·JWT 인증
+- 비동기 이메일 비밀번호 재설정
+- ADMIN의 Steam 게임 JSON DB 적재(`POST /admin/db/load-json-games`)
+
+<br/>
+
+## 로컬 실행
+
+**사전 준비**
+- JDK 17+
+- MySQL (`readyplz` 또는 dev 프로필 시 `readyplz_dev`)
+- Redis (`localhost:6379`)
+- JWT 시크릿: 환경 변수 `JWT_SECRET` 또는(dev) `application-local.properties`의 `jwt.secret`
+
+**실행 예시**
+```bash
+./gradlew bootRun --args='--spring.profiles.active=dev'
+```
+Windows:
+```bat
+gradlew.bat bootRun --args="--spring.profiles.active=dev"
+```
+
+- 기본 포트: `8080`
+- 메일(로컬): `application.properties` 기준 `localhost:1025` (실제 발송 시 SMTP 설정 필요)
+- 상세 설정: `src/main/resources/application.properties`, `application-dev.properties`
+
+<br/>
+
+---
+
 ## 상세 문서
 *아래 링크를 클릭하시면 해당 상세 페이지로 이동합니다.*
 
-##  [1.웹앱 흐름 및 아키텍처 개요](./docs/01-architecture.md)
-전체적인 앱의 아키텍처의 개요를 보여줍니다. 또한 USER 계정과 ADMIN계정의 흐름과 기능에 대한 설명입니다.
+### [1. 웹앱 흐름 및 아키텍처 개요](./docs/01-architecture.md)
+전체적인 앱의 아키텍처 개요와 USER / ADMIN 계정 흐름·기능을 설명합니다.
 
-## [2.주요 기능](./docs/02-features.md)
-이중 토큰(Access/Refresh) 전략, 실시간 채팅, 비밀번호 재설정 등 프로젝트의 핵심 기능을 소개합니다.
+### [2. 주요 기능](./docs/02-features.md)
+이중 토큰(Access/Refresh), 메시징·WebSocket, 비밀번호 재설정 등 핵심 기능을 소개합니다.
+- [2.1 JWT Access/Refresh 이중 토큰](./docs/2.1-jwt_double_token.md)
+- [2.2 Redis와 JWT](./docs/2.2-redis_jwt.md)
+- [2.3 Spring Security 커스텀 인증](./docs/2.3-jwt_spring_security.md)
+- [2.4 이메일 비밀번호 재설정](./docs/2.4-email_reset.md)
+- [2.5 WebSocket / STOMP](./docs/2.5-websocket_chat.md)
 
-## [3.기술적 고민 및 아키텍처 결정](./docs/03-tech-decisions.md)
+### [3. 기술적 고민 및 아키텍처 결정](./docs/03-tech-decisions.md)
 - JWT와 Redis를 조합한 인증 방식
 - Spring Security의 커스텀 필터 흐름
-- SMTP(포트 587)를 활용한 비동기 이메일 처리
+- SMTP를 활용한 비동기 이메일 처리
 - WebSocket과 STOMP를 활용한 채팅 아키텍처
 
-## [4.문제 해결](./docs/04-troubleshooting.md)
-과도한 API 요청에 의한 `429 Too Many Requests` 문제와 이를 해결하기 위한 아키텍처 변경 경험을 담았습니다.
+### [4. 문제 해결](./docs/04-troubleshooting.md)
+과도한 API 요청에 의한 `429 Too Many Requests` 문제와, Steam API 실시간 호출을 폐기하고 JSON/DB 사전 적재로 전환한 경험을 담았습니다.
 
-## [5.AWS관련](./docs/aws/aws_main.md)
-서버를 배포한 AWS의 EC2, ELB, RDS 등과 관련된 내용입니다.
+### [5. AWS 관련](./docs/aws/aws_main.md)
+EC2, ELB, RDS 등 배포 관련 내용입니다.
+- [EC2](./docs/aws/ec2.md)
+- [Ubuntu 배포](./docs/aws/ubuntu.md)
+- [ELB](./docs/aws/elb.md)
+- [HTTPS](./docs/aws/https.md)
+- [RDS](./docs/aws/rds.md)
 
-<br>
-<br>
-<br>
+<br/>
 
 *이상입니다, 저의 깃허브 방문을 감사드립니다.*
