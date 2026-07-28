@@ -32,9 +32,7 @@ A. 중요한 차이는 저장해야 하는 데이터의 양과 범위입니다. 
 - 로그인 시 FormLogin 방식을 Disable하고, 필터 체인의 `UsernamePasswordAuthenticationFilter` 이전에 커스텀한 `JwtAuthenticationFilter`를 배치했습니다.
 - 요청마다 토큰 검증 → 인증 성공 시 SecurityContext 주입 → 인가 처리를 과정을 거칩니다.
 
-<img width="1867" height="201" alt="스크린샷 2025-10-12 173346" src="https://github.com/user-attachments/assets/7514d003-0326-40ad-8a66-77216049ecc9" />
 
----
 
 ## 3.3 SMTP (포트 587)를 활용한 비밀번호 재설정
 
