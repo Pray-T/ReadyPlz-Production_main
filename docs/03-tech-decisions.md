@@ -22,8 +22,7 @@ A. 중요한 차이는 저장해야 하는 데이터의 양과 범위입니다. 
 만약 탈취된 이전 토큰으로 갱신을 시도하면 Redis에 저장된 토큰과 불일치하여 거부되므로, 토큰 재사용을 불가능하게 합니다.
 
 **동작 과정**
-<img width="1136" height="722" alt="image" src="https://github.com/user-attachments/assets/1b147b6e-260b-47df-a8eb-c3483c0f2198" />
-<img width="612" height="151" alt="image" src="https://github.com/user-attachments/assets/836ae0f6-83fe-480c-b6b7-0181d97d830d" />
+
 
 ---
 
@@ -51,7 +50,7 @@ A. 중요한 차이는 저장해야 하는 데이터의 양과 범위입니다. 
 <img width="473" height="285" alt="image" src="https://github.com/user-attachments/assets/3857b9b6-f532-46f5-8cc6-6b5da70a3de6" />
 
 3.**동작 과정:** <br>
-<img width="763" height="524" alt="image" src="https://github.com/user-attachments/assets/e1fdc7c3-4323-41ff-8554-e667aff8a9c2" />
+
 
 ---
 
@@ -83,4 +82,3 @@ ALB는 L7(응용 계층)에서 동작하므로 HTTP 프로토콜을 완벽하게
 <br>
 <br>
 **WebSocket프로토콜과 STOMP 동작 과정** <br>
-<img width="1157" height="650" alt="image" src="https://github.com/user-attachments/assets/06ba6604-23dc-4ee7-a01e-b99bdd2796f3" />
