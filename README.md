@@ -24,6 +24,22 @@
 Steam 게임을 기준으로 함께 플레이할 유저를 찾고, 회원 간 메시지를 주고할 수 있는 웹 애플리케이션입니다.  
 패키지 루트는 `io.readyplz.readyplz` 이며, Thymeleaf SSR과 REST API를 함께 사용합니다.
 
+**데모**
+- Live: [https://readyplz.com](https://readyplz.com) (`https://www.readyplz.com`)
+- 배포 환경이 일시적으로 내려가 있으면 아래 **로컬 실행**으로 동일 흐름을 확인할 수 있습니다.
+
+**스크린샷 · 아키텍처**
+
+<p align="center">
+  <img src="./src/main/resources/static/images/ReadyPlzBackGroundGraphic.png" alt="ReadyPlz 앱 비주얼" width="720" />
+</p>
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/74f1e165-7f42-4e01-9021-283476e37eee" alt="ReadyPlz 시스템 아키텍처" width="400" />
+</p>
+
+<p align="center"><em>시스템 아키텍처 다이어그램 (상세: <a href="./docs/01-architecture.md">docs/01-architecture.md</a>)</em></p>
+
 **주요 기능·동작**
 - Access / Refresh 이중 JWT + Redis(활성 토큰·블랙리스트 저장). 기본 만료: Access **1시간**, Refresh **7일** (`application.properties`)
 - JWT 발급·갱신·로그아웃: `AuthController` (`/api/auth/**`). 로그인 폼 화면만 `LoginController` (`GET /members/loginForm`)
@@ -39,13 +55,81 @@ Steam 게임을 기준으로 함께 플레이할 유저를 찾고, 회원 간 �
 
 ## 로컬 실행
 
-**사전 준비**
+### 사전 준비
 - JDK 17+
 - MySQL (`readyplz` 또는 dev 프로필 시 `readyplz_dev`)
 - Redis (`localhost:6379`)
-- JWT 시크릿: 환경 변수 `JWT_SECRET` 또는(dev) `application-local.properties`의 `jwt.secret`
+- JWT 시크릿: 환경 변수 `JWT_SECRET` 또는(dev) `application-local.properties`의 `jwt.secret`  
+  (`application-local.properties`는 Git 제외 — `src/main/resources/application-local.properties`에 예: `jwt.secret=로컬용-충분히-긴-시크릿`)
 
-**실행 예시**
+### 1) DB 스키마 생성
+운영/기본 설정은 `spring.jpa.hibernate.ddl-auto=validate` 이라 **빈 DB만 있으면 기동이 실패**합니다. 로컬 최초 1회는 스키마를 만든 뒤 validate로 되돌리세요.
+
+```sql
+CREATE DATABASE readyplz_dev
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+```
+
+```bash
+# 최초 1회: 엔티티 기준으로 테이블 생성
+./gradlew bootRun --args='--spring.profiles.active=dev --spring.jpa.hibernate.ddl-auto=update'
+```
+
+Windows:
+```bat
+gradlew.bat bootRun --args="--spring.profiles.active=dev --spring.jpa.hibernate.ddl-auto=update"
+```
+
+테이블이 생성된 뒤에는 기본값(`validate`)으로 재기동합니다.
+
+### 2) Steam 게임 JSON 준비
+- 기본 위치: `src/main/resources/steam_games_data.json` (classpath, 저장소에 포함됨)
+- 설정: `app.games.import.data-location=classpath:steam_games_data.json`
+- 대용량을 파일로 둘 경우(dev): `app.games.import.data-location=file:${user.home}/steam_games_data.json`
+- **DB 적재는 ADMIN 전용 API**로 수행합니다 (아래 3번 후).
+
+```http
+POST /admin/db/load-json-games
+```
+
+`/admin/**`은 CSRF 예외가 아니므로, 브라우저에서 로그인 후 Cookie(`accessToken` 등)와 `XSRF-TOKEN` 쿠키 값을 `X-XSRF-TOKEN` 헤더로 함께 보내면 됩니다.
+
+```bash
+# 예시 (토큰·쿠키 값은 로그인 세션에서 복사)
+curl -X POST "http://localhost:8080/admin/db/load-json-games" \
+  -H "Cookie: accessToken=...; refreshToken=...; XSRF-TOKEN=..." \
+  -H "X-XSRF-TOKEN: <XSRF-TOKEN 쿠키와 동일 값>"
+```
+
+성공 시 게임 검색·컬렉션 기능을 사용할 수 있습니다.
+
+### 3) ADMIN 계정 생성
+회원가입 API/화면은 `ROLE_USER`만 부여합니다. 게임 JSON 적재·문의 수신을 위해 ADMIN이 필요합니다.
+
+1. 일반 회원으로 가입 (`GET /members/registerForm` 또는 `POST /api/auth/register`)
+2. MySQL에서 `ROLE_ADMIN`을 만들고 해당 회원에 연결합니다.
+
+```sql
+INSERT INTO role (name)
+SELECT 'ROLE_ADMIN' FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM role WHERE name = 'ROLE_ADMIN');
+
+-- your_admin_username 을 실제 username 으로 바꿔 실행
+INSERT INTO member_roles (member_id, role_id)
+SELECT m.member_id, r.id
+FROM members m
+JOIN role r ON r.name = 'ROLE_ADMIN'
+WHERE m.username = 'your_admin_username'
+  AND NOT EXISTS (
+    SELECT 1 FROM member_roles mr
+    WHERE mr.member_id = m.member_id AND mr.role_id = r.id
+  );
+```
+
+3. 해당 계정으로 다시 로그인 → `POST /admin/db/load-json-games`로 JSON 적재
+
+### 실행 예시
 ```bash
 ./gradlew bootRun --args='--spring.profiles.active=dev'
 ```
@@ -57,6 +141,36 @@ gradlew.bat bootRun --args="--spring.profiles.active=dev"
 - 기본 포트: `8080`
 - 메일(로컬): `application.properties` 기준 `localhost:1025` (실제 발송 시 SMTP 설정 필요)
 - 상세 설정: `src/main/resources/application.properties`, `application-dev.properties`
+
+**권장 확인 순서 (리뷰어)**
+1. Redis·MySQL 기동 → DB 생성 → `ddl-auto=update`로 1회 기동  
+2. 회원가입 → SQL로 ADMIN 승격 → 재로그인  
+3. `POST /admin/db/load-json-games`로 게임 데이터 적재  
+4. `/games/collection`, `/messages` 등 핵심 화면 확인  
+
+<br/>
+
+## 테스트
+
+`src/test` 아래 단위/슬라이스 테스트가 있습니다. H2 in-memory + Redis/Mail 자동설정 제외(`application-test.properties`)로 로컬에서 빠르게 돌릴 수 있습니다.
+
+| 영역 | 클래스 | 검증 포인트 |
+|------|--------|-------------|
+| Security | `SecurityConfigTest` | 홈·헬스 공개 접근 |
+| JWT 필터 | `JwtAuthenticationFilterTest` | Redis 활성 토큰 일치/불일치 |
+| 메시징 | `MessageServiceTest` | afterCommit 알림 push, 저장 실패·롤백 시 미발행 |
+| 회원 | `MemberServiceTest` | 닉네임 유지/중복 거부 |
+| 게임 import | `GameImportBatchServiceTest` | 배치 저장·중복 스킵 |
+| 예외 | `RestApiExceptionHandlerTest` | API 오류 응답 메시지 노출 제한 |
+| 지원 | `TestRedisConfig` | 테스트용 Redis 빈 |
+
+```bash
+./gradlew test
+```
+Windows:
+```bat
+gradlew.bat test
+```
 
 <br/>
 

@@ -16,13 +16,13 @@
 <br>
   (2). Security Layer (보안 및 인증) <br>
 HTTP 요청: SecurityConfig에 등록된 JwtAuthenticationFilter를 거쳐 토큰의 유효성을 검사하고 SecurityContext에 인증 객체를 저장합니다. <br>
-WebSocket 요청: STOMP 프로토콜 연결 시 WebSocketAuthChannelInterceptor가 개입하여, 소켓 세션이 맺어지기 전 JWT 토큰을 검증함으로써 허가되지 않은 사용자의 채팅 연결을 차단합니다. <br>
+WebSocket 요청: STOMP 프로토콜 연결 시 WebSocketAuthChannelInterceptor가 개입하여, 소켓 세션이 맺어지기 전 쿠키 기반 JWT를 검증함으로써 허가되지 않은 사용자의 알림 연결을 차단합니다. <br>
 <br>
   (3). Controller Layer (표현 계층)<br>
 클라이언트의 요청을 받아 해당 Service로 위임하고, 결과를 View나 JSON 형태로 반환합니다.<br>
 AuthController, LoginController: JWT 발급 및 로그인 흐름 제어<br>
 GameController, MemberController: 도메인별 비즈니스 요청 처리<br>
-MessageController: 실시간 채팅 메시지 발행/구독(Pub/Sub) 라우팅<br>
+MessageController: HTTP 기반 1:1 메시징 처리 (`POST /messages/send` 등). 실시간 알림만 `MessageService`가 STOMP로 push<br>
 <br>
   (4). Service Layer (비즈니스 로직 계층)<br>
 트랜잭션(@Transactional) 경계를 설정하고 예외 처리를 담당합니다.<br>
@@ -35,7 +35,7 @@ Spring Data JPA를 사용하여 데이터베이스 접근 로직을 추상화하
 <br>
   (6). Database Layer<br>
 MySQL: 회원 정보, 게임 리스트, 채팅 메시지 내역 등 영구적으로 보존되어야 하는 데이터를 관리합니다.<br>
-Redis (In-Memory DB): 휘발성이 강하고 I/O 속도가 빨라야 하는 JWT Refresh Token 및 블랙리스트(로그아웃 처리), WebSocket 채팅 세션 정보를 관리하여 DB의 부하를 줄였습니다.
+Redis (In-Memory DB): 휘발성이 강하고 I/O 속도가 빨라야 하는 JWT 활성 토큰(Access/Refresh) 및 블랙리스트(로그아웃 처리)를 관리하여 DB의 부하를 줄입니다. WebSocket 세션 저장용이 아닙니다.
 <br>
 <br>
 엔티티 매핑 관계 (ERD 구조) <br>
@@ -57,7 +57,7 @@ Member ↔ Message (1:N): 하나의 회원은 송신자(Sender) 또는 수신자
 [로그인]
   Client → POST /api/auth/login (username, password)
     → AuthenticationManager 인증
-    → Access Token (1시간) + Refresh Token (12시간) 생성
+    → Access Token (1시간) + Refresh Token (7일) 생성
     → Redis에 토큰 저장
     → HttpOnly Cookie로 클라이언트에 전달
 <br><br>
@@ -107,8 +107,9 @@ Member ↔ Message (1:N): 하나의 회원은 송신자(Sender) 또는 수신자
 
 [프로필 관리]<br>
   GET /members/profile → 프로필 페이지 (내 게임, 닉네임 등)
-  POST /members/profile/nickname → 닉네임 변경 (중복 검증)
-  POST /members/profile/password → 비밀번호 변경 (현재 비밀번호 확인)
+  POST /members/profile/confirm-nickname → 닉네임 변경 확인 페이지
+  POST /members/profile/update-nickname-confirmed → 닉네임 변경 확정 (중복 검증)
+  POST /members/profile/change-password → 비밀번호 변경 (현재 비밀번호 확인)
   POST /members/profile/delete-account → 계정 삭제 (비밀번호 + 이메일 확인)
 
 [비밀번호 재설정]<br>

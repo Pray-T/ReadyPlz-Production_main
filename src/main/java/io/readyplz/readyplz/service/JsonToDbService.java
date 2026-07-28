@@ -42,7 +42,6 @@ public class JsonToDbService {
         int totalSavedCount = 0;
         int totalSkippedCount = 0;
         int totalInvalidCount = 0;
-        int batchNumber = 0;
 
         try (InputStream inputStream = resource.getInputStream()) {
             JsonFactory factory = objectMapper.getFactory();
