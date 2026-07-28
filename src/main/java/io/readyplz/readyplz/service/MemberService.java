@@ -9,6 +9,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import org.springframework.data.domain.PageRequest;
 
@@ -84,12 +86,31 @@ public class MemberService {
             memberRepository.findByEmail(email).ifPresent(member -> {
                 member.setResetToken(token);
                 member.setResetTokenExpiry(expiry);
-                emailService.sendResetMail(email, token);
+                // 토큰이 DB에 커밋된 뒤에만 메일을 발송한다.
+                // (커밋 전 발송 시, 사용자가 즉시 링크를 클릭하면 토큰이 조회되지 않을 수 있음)
+                scheduleResetMailAfterCommit(email, token);
             });
         } finally {
-            // 메일 유무에 따른 타이밍 기반 추정 완화를 위해 항상 일정한 연산 수행 (예: BCrypt 해시 연산 mais CPU는 더 잡아먹음)
+            // 메일 발송 유무에 따른 타이밍 기반 사용자 열거 완화를 위해 항상 동일한 CPU 연산을 수행한다.
             passwordEncoder.encode(token);
         }
+    }
+
+    /**
+     * DB 커밋 성공 후에만 비동기 재설정 메일을 발송한다.
+     * 트랜잭션 동기화가 비활성인 경우(테스트 등)에는 즉시 발송한다.
+     */
+    private void scheduleResetMailAfterCommit(String email, String token) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            emailService.sendResetMail(email, token);
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                emailService.sendResetMail(email, token);
+            }
+        });
     }
 
     public Optional<Member> findByResetToken(String token) {

@@ -47,7 +47,7 @@ Steam 게임을 기준으로 함께 플레이할 유저를 찾고, 회원 간 �
 - 게임 컬렉션·동일 게임 유저 조회 (Steam 데이터는 JSON → DB 사전 적재, 실시간 Steam API 호출 없음)
 - 회원 1:1 메시징은 **HTTP** (`MessageController`, `POST /messages/send` 등). `MessageService.sendMessage`가 DB 저장 후 트랜잭션 **afterCommit** 시점에만 `SimpMessagingTemplate.convertAndSendToUser(수신자 username, /queue/notifications, payload)`로 실시간 알림 push. 페이로드는 `NotificationDTO{type, message, data}`(예: `type="MESSAGE"`, `data`=발신자 닉네임)이며, 브로커 발행 실패는 try/catch로 격리되어 저장·HTTP 응답에 영향 없음
 - WebSocket(STOMP/SockJS): 엔드포인트 `/ws-nearby-gamers`, SimpleBroker `/queue`·`/topic`, 유저 접두사 `/user`, 쿠키 기반 JWT 연결 인증(`WebSocketConfig`, `WebSocketAuthChannelInterceptor`, principal 이름=username). Redis는 WebSocket 세션 저장용이 아니라 JWT용
-- 비동기 이메일 비밀번호 재설정 (`EmailService` + `@Async`)
+- 비동기 이메일 비밀번호 재설정 (`EmailService` + `@Async`). `MemberService`가 토큰을 DB에 저장한 뒤 트랜잭션 **afterCommit** 시점에만 메일을 발송하여, 커밋 전 발송으로 인한 토큰 미조회를 방지
 - ADMIN JSON 게임 적재 (`POST /admin/db/load-json-games`)
 - 프로필: `ProfileController` (`/members/profile`, `confirm-nickname`, `change-password` 등)
 
@@ -107,7 +107,7 @@ curl -X POST "http://localhost:8080/admin/db/load-json-games" \
 ### 3) ADMIN 계정 생성
 회원가입 API/화면은 `ROLE_USER`만 부여합니다. 게임 JSON 적재·문의 수신을 위해 ADMIN이 필요합니다.
 
-1. 일반 회원으로 가입 (`GET /members/registerForm` 또는 `POST /api/auth/register`)
+1. 일반 회원으로 가입 (`GET /members/register` 또는 `POST /api/auth/register`)
 2. MySQL에서 `ROLE_ADMIN`을 만들고 해당 회원에 연결합니다.
 
 ```sql
