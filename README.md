@@ -24,15 +24,8 @@
 Steam 게임을 기준으로 함께 플레이할 유저를 찾고, 회원 간 메시지를 주고할 수 있는 웹 애플리케이션입니다.  
 패키지 루트는 `io.readyplz.readyplz` 이며, Thymeleaf SSR과 REST API를 함께 사용합니다.
 
-**데모**
-- Live: [https://readyplz.com](https://readyplz.com) (`https://www.readyplz.com`)
-- 배포 환경이 일시적으로 내려가 있으면 아래 **로컬 실행**으로 동일 흐름을 확인할 수 있습니다.
 
-**스크린샷 · 아키텍처**
-
-<p align="center">
-  <img src="./src/main/resources/static/images/ReadyPlzBackGroundGraphic.png" alt="ReadyPlz 앱 비주얼" width="720" />
-</p>
+**아키텍처**
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/74f1e165-7f42-4e01-9021-283476e37eee" alt="ReadyPlz 시스템 아키텍처" width="400" />
@@ -60,7 +53,7 @@ Steam 게임을 기준으로 함께 플레이할 유저를 찾고, 회원 간 �
 - MySQL (`readyplz` 또는 dev 프로필 시 `readyplz_dev`)
 - Redis (`localhost:6379`)
 - JWT 시크릿: 환경 변수 `JWT_SECRET` 또는(dev) `application-local.properties`의 `jwt.secret`  
-  (`application-local.properties`는 Git 제외 — `src/main/resources/application-local.properties`에 예: `jwt.secret=로컬용-충분히-긴-시크릿`)
+  (`application-local.properties`는 Git 제외 — `src/main/resources/application-local.properties`에 예: `jwt.secret=로컬용 시크릿 키를 입력해주세요`)
 
 ### 1) DB 스키마 생성
 운영/기본 설정은 `spring.jpa.hibernate.ddl-auto=validate` 이라 **빈 DB만 있으면 기동이 실패**합니다. 로컬 최초 1회는 스키마를 만든 뒤 validate로 되돌리세요.
