@@ -25,7 +25,8 @@
 
 ## 3.2 Spring Security와 JWT 인증/인가 흐름
 
-- **흐름**: `CORS` → `(CSRF 비활성)` → `JwtAuthenticationFilter` → `ExceptionTranslationFilter` → `FilterSecurityInterceptor` → `Controller`
+- **흐름**: `CORS` → `CsrfFilter`(Cookie CSRF 활성, `/api/**`만 예외) → `JwtAuthenticationFilter` → `ExceptionTranslationFilter` → `FilterSecurityInterceptor` → `Controller`
+- CSRF: `CookieCsrfTokenRepository.withHttpOnlyFalse()`로 기본 활성. Access Token을 쿠키로도 쓰므로 SSR 폼·`/admin/**` 등 쿠키 인증 POST는 `X-XSRF-TOKEN`이 필요하고, REST `/api/**`만 `ignoringRequestMatchers`로 검사에서 제외합니다.
 - 로그인 시 FormLogin 방식을 Disable하고, 필터 체인의 `UsernamePasswordAuthenticationFilter` 이전에 커스텀한 `JwtAuthenticationFilter`를 배치했습니다.
 - 요청마다 토큰 검증 → 인증 성공 시 SecurityContext 주입 → 인가 처리를 과정을 거칩니다.
 
