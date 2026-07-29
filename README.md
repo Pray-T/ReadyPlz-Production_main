@@ -25,11 +25,10 @@ Spring Boot 기반으로 JWT·Redis 인증, WebSocket(STOMP) 알림, MySQL/JPA, 
 ## 아키텍쳐 및 주요 기능·동작
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/74f1e165-7f42-4e01-9021-283476e37eee" alt="ReadyPlz 시스템 아키텍처" width="400" />
+  <img src="./docs/images/architecture.png" alt="ReadyPlz 시스템 아키텍처" width="400" />
 </p>
 
 <p align="center"><em>시스템 아키텍처 다이어그램 (상세: <a href="./docs/01-architecture.md">docs/01-architecture.md</a>)</em></p>
-<p align="center"><sub><em>※ 다이어그램의 Redis는 JWT 활성 토큰(Access/Refresh) 및 블랙리스트 저장소이며, WebSocket 세션 저장용이 아닙니다.</em></sub></p>
 
 - Access / Refresh 이중 JWT + Redis(활성 토큰·블랙리스트 저장). 기본 만료: Access **1시간**, Refresh **7일** (`application.properties`)
 <br><br>

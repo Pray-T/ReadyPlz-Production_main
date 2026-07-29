@@ -6,9 +6,7 @@
 계층(Layer) 간의 의존성은 아래와 같이 분리설계 하였습니다.<br>
 <br>
 
-<img width="400" height="697" alt="ReadyPlz 시스템 아키텍처 다이어그램" src="https://github.com/user-attachments/assets/74f1e165-7f42-4e01-9021-283476e37eee" />
-<br>
-<sub><em>※ 다이어그램의 Redis는 JWT 활성 토큰(Access/Refresh) 및 블랙리스트 저장소이며, WebSocket 세션 저장용이 아닙니다.</em></sub>
+<img width="400" alt="ReadyPlz 시스템 아키텍처 다이어그램" src="./images/architecture.png" />
 <br>
 <br>
 
