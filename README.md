@@ -14,12 +14,13 @@ Spring Boot 기반으로 JWT·Redis 인증, WebSocket(STOMP) 알림, MySQL/JPA, 
 
 | 구분 | 기술 |
 |------|------|
-| Language | ~~ |
-| Framework | ~~ |
-| ORM | ~~ |
-| Database | ~~ |
-| Cache | ~~ |
-| API Docs | ~~ |
+| Language | Java 17 |
+| Framework | Spring Boot 3.2.3 |
+| ORM | Spring Data JPA (Hibernate) |
+| Database | Spring Data JPA (Hibernate) |
+| Cache / Token store | Redis |
+| Security | Spring Security |
+| Infra | AWS EC2 |
 
 ## 아키텍쳐 및 주요 기능·동작
 
