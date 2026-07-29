@@ -205,7 +205,7 @@ EC2, ELB, RDS 등 배포 관련 내용입니다.
 - [RDS](./docs/aws/rds.md)
 
 ## 다른 포트폴리오
-- [은행 이체 구현을 통한 MySQL 동시성 정합성과 Redis 멱등성/스로틀을 중심으로 구현한 백엔드 포트폴리오](https://github.com/Pray-T/BankTransferSys_Backend_Restful) <br>
+- [은행 이체 REST API를 통해 MySQL 동시성 정합성과 Redis 멱등성/스로틀을 중심으로 구현, 대량 데이터 인덱스 조회 실험 검증](https://github.com/Pray-T/BankTransferSys_Backend_Restful) <br>
 - [Cursor Agent를 이용하여 GitHub Copilot을 저렴하게 사용해보기](https://github.com/Pray-T/GitHub-Copilot-With-Cursor)
 <br>
 <br>
