@@ -205,7 +205,7 @@ public class AuthController {
             String storedRefreshToken = tokenService.getRefreshToken(username);
             if (!refreshToken.equals(storedRefreshToken)) {
                 Map<String, Object> errorBody = new HashMap<>();
-                errorBody.put("message", "재사용 혹은 위조된된 리프레시 토큰입니다");
+                errorBody.put("message", "재사용 혹은 위조된 리프레시 토큰입니다");
                 return ResponseEntity.badRequest().body(errorBody);
             }
 

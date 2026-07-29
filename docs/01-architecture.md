@@ -6,7 +6,9 @@
 계층(Layer) 간의 의존성은 아래와 같이 분리설계 하였습니다.<br>
 <br>
 
-<img width="400" height="697" alt="스크린샷 2026-03-20 140653" src="https://github.com/user-attachments/assets/74f1e165-7f42-4e01-9021-283476e37eee" />
+<img width="400" height="697" alt="ReadyPlz 시스템 아키텍처 다이어그램" src="https://github.com/user-attachments/assets/74f1e165-7f42-4e01-9021-283476e37eee" />
+<br>
+<sub><em>※ 다이어그램의 Redis는 JWT 활성 토큰(Access/Refresh) 및 블랙리스트 저장소이며, WebSocket 세션 저장용이 아닙니다.</em></sub>
 <br>
 <br>
 
@@ -97,7 +99,7 @@ Member ↔ Message (1:N): 하나의 회원은 송신자(Sender) 또는 수신자
   GET /messages/{otherMemberId}
     → 특정 상대와의 대화 내역 조회 (페이징)
   POST /messages/send
-    → 메시지 전송 (전체 1000개 제한, 초과 시 오래된 10개 자동 삭제)
+    → 메시지 전송 (대화 상대별 1000개 제한, 초과 시 해당 대화의 오래된 10개 자동 삭제)
   GET /messages/game/{gameId}/users
     → 특정 게임의 다른 유저 목록 조회 (자신 제외)
 <br><br>
