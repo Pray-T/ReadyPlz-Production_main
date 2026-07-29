@@ -1,38 +1,27 @@
-# 긍정적으로 일하고 세상에 도움이 되는 사람이 되자. <br> 안녕하세요 백엔드 개발자 최성욱입니다.
-
-먼저 귀한 시간을 내어 저의 깃허브에 방문해 주신 것에 감사드립니다.<br/>
-저는 팀의 일원으로서 팀원들과 함께 좋은 에너지와 시너지를 만들며 일하고 싶고, 동시에 혼자 고민하는 시간을 통해 전문가로서의 역량을 기르고자 하고 적은 비용으로 어떻게 하면 많은 효과를 누릴 수 있을까? 하고 생각하는 개발자입니다.
-
-
+# ReadyPlz-Production_main
+**긍정적으로 일하고 세상에 도움이 되는 사람이 되자.**
+<br>
+<br>
+안녕하세요 먼저 귀한 시간을 내어 저의 깃허브에 방문해 주신 것에 감사드립니다.<br/>
+저는 팀의 일원으로서 팀원들과 함께 좋은 에너지를 만들며 일하고 싶고, 동시에 혼자 고민하는 시간을 통해 전문가로서의 역량을 기르고자 하고 적은 비용으로 어떻게 하면 많은 효과를 누릴 수 있을까? 하고 생각하는 개발자입니다.
+<br>
+<br>
+이 프로젝트는 Steam 게임을 기준으로 함께 플레이할 유저를 찾고, 회원 간 메시징과 알림을 제공하는 웹 애플리케이션입니다.<br>
+Spring Boot 기반으로 JWT·Redis 인증, WebSocket(STOMP) 알림, MySQL/JPA, AWS(EC2·ELB·RDS) 배포까지 직접 구현·운영했습니다.
 <br/>
 
-## Profile
+## 기술 스택
 
-- 이름 : 최성욱
-- 이메일 : cenmot@naver.com
-- 기술 스택 : `Java 17`, `Spring Boot 3.2`, `Spring Security`, `JWT`, `Redis`, `MySQL`, `JPA`, `Thymeleaf`, `WebSocket(STOMP/SockJS)`, `Spring Mail`, `AWS(EC2, ELB, RDS)`
-- 또 다른 포트폴리오:<br>
-[이체시스템의 구현을 통한 MySQL의 정합성과 인덱스](https://github.com/Pray-T/BankTransferSys_Backend_Restful) <br>
-[Cursor Agent를 이용하여 GitHub Copilot을 저렴하게 사용해보기](https://github.com/Pray-T/GitHub-Copilot-With-Cursor)
+| 구분 | 기술 |
+|------|------|
+| Language | ~~ |
+| Framework | ~~ |
+| ORM | ~~ |
+| Database | ~~ |
+| Cache | ~~ |
+| API Docs | ~~ |
 
-<br/>
-
----
-
-## ReadyPlz 프로젝트
-
-Steam 게임을 기준으로 함께 플레이할 유저를 찾고, 회원 간 메시지를 주고할 수 있는 웹 애플리케이션입니다.  
-패키지 루트는 `io.readyplz.readyplz` 이며, Thymeleaf SSR과 REST API를 함께 사용합니다.
-
-**데모**
-- Live: [https://readyplz.com](https://readyplz.com) (`https://www.readyplz.com`)
-- 배포 환경이 일시적으로 내려가 있으면 아래 **로컬 실행**으로 동일 흐름을 확인할 수 있습니다.
-
-**스크린샷 · 아키텍처**
-
-<p align="center">
-  <img src="./src/main/resources/static/images/ReadyPlzBackGroundGraphic.png" alt="ReadyPlz 앱 비주얼" width="720" />
-</p>
+## 아키텍쳐 및 주요 기능·동작
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/74f1e165-7f42-4e01-9021-283476e37eee" alt="ReadyPlz 시스템 아키텍처" width="400" />
@@ -40,18 +29,25 @@ Steam 게임을 기준으로 함께 플레이할 유저를 찾고, 회원 간 �
 
 <p align="center"><em>시스템 아키텍처 다이어그램 (상세: <a href="./docs/01-architecture.md">docs/01-architecture.md</a>)</em></p>
 
-**주요 기능·동작**
 - Access / Refresh 이중 JWT + Redis(활성 토큰·블랙리스트 저장). 기본 만료: Access **1시간**, Refresh **7일** (`application.properties`)
+<br><br>
 - JWT 발급·갱신·로그아웃: `AuthController` (`/api/auth/**`). 로그인 폼 화면만 `LoginController` (`GET /members/loginForm`)
-- Spring Security: `JwtAuthenticationFilter` + **CSRF 활성**(Cookie CSRF, `/api/**`만 예외)
+ <br><br>
+- Spring Security: `JwtAuthenticationFilter` + **CSRF 활성**(Cookie CSRF, `/api/**`만 예외) 
+<br><br>
 - 게임 컬렉션·동일 게임 유저 조회 (Steam 데이터는 JSON → DB 사전 적재, 실시간 Steam API 호출 없음)
+ <br><br>
 - 회원 1:1 메시징은 **HTTP** (`MessageController`, `POST /messages/send` 등). `MessageService.sendMessage`가 DB 저장 후 트랜잭션 **afterCommit** 시점에만 `SimpMessagingTemplate.convertAndSendToUser(수신자 username, /queue/notifications, payload)`로 실시간 알림 push. 페이로드는 `NotificationDTO{type, message, data}`(예: `type="MESSAGE"`, `data`=발신자 닉네임)이며, 브로커 발행 실패는 try/catch로 격리되어 저장·HTTP 응답에 영향 없음
+ <br><br>
 - WebSocket(STOMP/SockJS): 엔드포인트 `/ws-nearby-gamers`, SimpleBroker `/queue`·`/topic`, 유저 접두사 `/user`, 쿠키 기반 JWT 연결 인증(`WebSocketConfig`, `WebSocketAuthChannelInterceptor`, principal 이름=username). Redis는 WebSocket 세션 저장용이 아니라 JWT용
-- 비동기 이메일 비밀번호 재설정 (`EmailService` + `@Async`). `MemberService`가 토큰을 DB에 저장한 뒤 트랜잭션 **afterCommit** 시점에만 메일을 발송하여, 커밋 전 발송으로 인한 토큰 미조회를 방지
-- ADMIN JSON 게임 적재 (`POST /admin/db/load-json-games`)
+ <br><br>
+- 비동기 이메일 비밀번호 재설정 (`EmailService` + `@Async`). `MemberService`가 토큰을 DB에 저장한 뒤 트랜잭션 **afterCommit** 시점에만 메일을 발송하여, 커밋 전 발송으로 인한 토큰 미조회를 방지 
+<br><br>
+- ADMIN JSON 게임 적재 (`POST /admin/db/load-json-games`) 
+<br><br>
 - 프로필: `ProfileController` (`/members/profile`, `confirm-nickname`, `change-password` 등)
-
-<br/>
+<br>
+<br>
 
 ## 로컬 실행
 
@@ -207,6 +203,10 @@ EC2, ELB, RDS 등 배포 관련 내용입니다.
 - [HTTPS](./docs/aws/https.md)
 - [RDS](./docs/aws/rds.md)
 
-<br/>
+## 다른 포트폴리오
+- [은행 이체 구현을 통한 MySQL 동시성 정합성과 Redis 멱등성/스로틀을 중심으로 구현한 백엔드 포트폴리오](https://github.com/Pray-T/BankTransferSys_Backend_Restful) <br>
+- [Cursor Agent를 이용하여 GitHub Copilot을 저렴하게 사용해보기](https://github.com/Pray-T/GitHub-Copilot-With-Cursor)
+<br>
+<br>
 
-*이상입니다, 저의 깃허브 방문을 감사드립니다.*
+**이상입니다, 저의 깃허브 방문을 감사드립니다.**
