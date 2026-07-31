@@ -6,13 +6,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
-@Repository // 이 어노테이션은 필수는 아니지만, 명시적으로 컴포넌트 스캔 대상으로 지정할 수 있습니다.
-            // JpaRepository를 상속받는 인터페이스는 Spring Data JPA가 자동으로 빈으로 등록합니다.
 public interface GameRepository extends JpaRepository<Game, Long> {
                                      // JpaRepository<Entity클래스, PK타입>
 

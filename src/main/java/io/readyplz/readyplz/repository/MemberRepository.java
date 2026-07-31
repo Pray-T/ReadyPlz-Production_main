@@ -5,12 +5,10 @@ import org.springframework.data.jpa.repository.JpaRepository; // JpaRepository�
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository; // (선택 사항이지만 명시하는 것이 좋습니다)
 
 import java.util.List;
 import java.util.Optional; // 결과가 없을 수도 있는 경우 Optional 사용
 
-@Repository // 이 인터페이스가 Repository 계층의 컴포넌트임을 나타냅니다. (필수 아님, 가독성 목적)
 public interface MemberRepository extends JpaRepository<Member, Long> {
 
     // username으로 회원 찾기 (unique 제약조건이 있으므로 결과는 0개 또는 1개)

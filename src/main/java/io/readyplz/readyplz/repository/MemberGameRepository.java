@@ -5,7 +5,6 @@ import io.readyplz.readyplz.domain.Game;
 import io.readyplz.readyplz.domain.Member;
 import io.readyplz.readyplz.domain.MemberGame;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 import java.util.Set;
@@ -14,7 +13,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.repository.query.Param;
 
-@Repository // Spring Bean으로 등록하기 위한 애노테이션 (선택적이지만 명시적으로 사용하는 것이 좋음)
 public interface MemberGameRepository extends JpaRepository<MemberGame, Long> { // 엔티티 클래스와 ID 타입을 지정
 
     /**
