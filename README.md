@@ -34,7 +34,7 @@ Spring Boot 기반으로 JWT·Redis 인증, WebSocket(STOMP) 알림, MySQL/JPA, 
 <br><br>
 - JWT 발급·갱신·로그아웃: `AuthController` (`/api/auth/**`). 로그인 폼 화면만 `LoginController` (`GET /members/loginForm`)
  <br><br>
-- Spring Security: `JwtAuthenticationFilter` + **CSRF 활성**(Cookie CSRF, `/api/**`만 예외) 
+- Spring Security: `JwtAuthenticationFilter`를 `CsrfFilter` **앞**에 배치 + **CSRF 활성**(`NonClearingCookieCsrfTokenRepository` + `CsrfCookieFilter`, `/api/**`만 예외). JWT `STATELESS`에서 매 요청 인증 시 `XSRF-TOKEN` 쿠키가 지워지지 않게 하고, GET에도 쿠키를 내려줌 
 <br><br>
 - 게임 컬렉션·동일 게임 유저 조회 (Steam 데이터는 JSON → DB 사전 적재, 실시간 Steam API 호출 없음)
  <br><br>
@@ -90,7 +90,7 @@ gradlew.bat bootRun --args="--spring.profiles.active=dev --spring.jpa.hibernate.
 POST /admin/db/load-json-games
 ```
 
-`/admin/**`은 CSRF 예외가 아니므로, 브라우저에서 로그인 후 Cookie(`accessToken` 등)와 `XSRF-TOKEN` 쿠키 값을 `X-XSRF-TOKEN` 헤더로 함께 보내면 됩니다.
+`/admin/**`은 CSRF 예외가 아니므로, 브라우저에서 로그인 후 Cookie(`accessToken` 등)와 `XSRF-TOKEN` 쿠키 값을 `X-XSRF-TOKEN` 헤더로 함께 보내면 됩니다. 로그인 후 GET에서도 `CsrfCookieFilter`가 `XSRF-TOKEN`을 내려줍니다.
 
 ```bash
 # 예시 (토큰·쿠키 값은 로그인 세션에서 복사)
@@ -157,7 +157,7 @@ gradlew.bat bootRun --args="--spring.profiles.active=dev"
 | JWT 필터 | `JwtAuthenticationFilterTest` | Redis 활성 토큰 일치/불일치 |
 | 메시징 | `MessageServiceTest` | afterCommit 알림 push, 저장 실패·롤백 시 미발행 |
 | 회원 | `MemberServiceTest` | 닉네임 유지/중복 거부 |
-| 게임 import | `GameImportBatchServiceTest` | 배치 저장·중복 스킵 |
+| 게임 import | `GameImportBatchServiceTest` | 배치 저장·대소문자 무시 중복 스킵 |
 | 예외 | `RestApiExceptionHandlerTest` | API 오류 응답 메시지 노출 제한 |
 | 지원 | `TestRedisConfig` | 테스트용 Redis 빈 |
 
@@ -185,12 +185,12 @@ gradlew.bat test
 - [2.2 Redis와 JWT](./docs/2.2-redis_jwt.md)
 - [2.3 Spring Security 커스텀 인증](./docs/2.3-jwt_spring_security.md)
 - [2.4 이메일 비밀번호 재설정](./docs/2.4-email_reset.md)
-- [2.5 WebSocket / STOMP 연결·인증](./docs/2.5-websocket_chat.md)
+- [2.5 WebSocket / STOMP 실시간 알림](./docs/2.5-websocket_chat.md)
 
 ### [3. 기술적 고민 및 아키텍처 결정](./docs/03-tech-decisions.md)
 - JWT와 Redis를 조합한 인증 방식
-- Spring Security 커스텀 필터·CSRF(`/api/**` 예외) 흐름
-- 비동기 이메일(SMTP) 비밀번호 재설정
+- Spring Security 커스텀 필터·JWT를 CSRF 앞에 두는 Cookie CSRF 흐름 (`/api/**`만 예외)
+- 비동기 이메일(SMTP) 비밀번호 재설정 (로컬 1025 / 운영 587 STARTTLS)
 - WebSocket(STOMP) 연결·인증과 HTTP 기반 메시징 역할 분리
 
 ### [4. 문제 해결](./docs/04-troubleshooting.md)

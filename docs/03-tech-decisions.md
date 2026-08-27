@@ -25,17 +25,18 @@
 
 ## 3.2 Spring Security와 JWT 인증/인가 흐름
 
-- **흐름**: `CORS` → `CsrfFilter`(Cookie CSRF 활성, `/api/**`만 예외) → `JwtAuthenticationFilter` → `ExceptionTranslationFilter` → `FilterSecurityInterceptor` → `Controller`
-- CSRF: `CookieCsrfTokenRepository.withHttpOnlyFalse()`로 기본 활성. Access Token을 쿠키로도 쓰므로 SSR 폼·`/admin/**` 등 쿠키 인증 POST는 `X-XSRF-TOKEN`이 필요하고, REST `/api/**`만 `ignoringRequestMatchers`로 검사에서 제외합니다.
-- 로그인 시 FormLogin 방식을 Disable하고, 필터 체인의 `UsernamePasswordAuthenticationFilter` 이전에 커스텀한 `JwtAuthenticationFilter`를 배치했습니다.
-- 요청마다 토큰 검증 → 인증 성공 시 SecurityContext 주입 → 인가 처리를 과정을 거칩니다.
+- **흐름**: `CORS` → `JwtAuthenticationFilter`(`CsrfFilter` 앞) → `CsrfFilter`(Cookie CSRF 활성, `/api/**`만 예외) → `CsrfCookieFilter`(`BasicAuthenticationFilter` 뒤) → `ExceptionTranslationFilter` → `FilterSecurityInterceptor` → `Controller`
+- CSRF: `NonClearingCookieCsrfTokenRepository`(내부적으로 `CookieCsrfTokenRepository.withHttpOnlyFalse()`)로 활성. Access Token을 쿠키로도 쓰므로 SSR 폼·`/admin/**` 등 쿠키 인증 POST는 `X-XSRF-TOKEN`(또는 폼 `_csrf`)이 필요하고, REST `/api/**`만 `ignoringRequestMatchers`로 검사에서 제외합니다.
+- JWT `STATELESS`에서는 요청마다 인증이 다시 적용되어 기본 `CsrfAuthenticationStrategy`가 `saveToken(null)`로 `XSRF-TOKEN`을 지웁니다. 저장소가 null 저장을 무시하고, `CsrfCookieFilter`가 deferred 토큰을 GET에도 쿠키로 내려줍니다.
+- JWT를 CSRF보다 앞에 두는 이유: CSRF가 먼저 실패하면 SecurityContext가 비어 `AuthenticationEntryPoint`가 `/members/loginForm`으로 리다이렉트합니다. 닉네임 수정 등 SSR POST가 로그아웃처럼 보이는 현상을 막기 위함입니다.
+- 로그인 시 FormLogin은 사용하지 않습니다. 요청마다 토큰 검증 → 인증 성공 시 SecurityContext 주입 → 인가 처리를 거칩니다.
 
 
 
-## 3.3 SMTP (포트 587)를 활용한 비밀번호 재설정
+## 3.3 SMTP를 활용한 비밀번호 재설정
 
-**포트 587을 선택한 이유:**
-포트 25는 암호화가 안 되고 차단되며, 포트 465는 무조건 SSL/TLS 암호화를 진행합니다. 반면 **포트 587**은 평문으로 시작하여 필요시 `STARTTLS` 명령어를 통해 암호화 채널로 업그레이드할 수 있는 유연성이 있어 채택했습니다.
+**로컬과 운영 포트:**
+저장소의 `application.properties` 기본값은 로컬 메일 캡처용 `localhost:1025`(인증·STARTTLS 없음)입니다. 운영에서는 포트 25가 차단·비암호화되고, 465는 무조건 SSL/TLS입니다. 실제 발송 환경에서는 **포트 587 + STARTTLS**로 평문 시작 후 필요 시 암호화 채널로 올리는 구성을 사용합니다.
 
 **보안 및 최적화:** 
 <br>
@@ -46,19 +47,22 @@
 
 
 
-## 3.4 WebSocket과 STOMP를 활용한 채팅 아키텍처
+## 3.4 WebSocket과 STOMP를 활용한 실시간 알림 아키텍처
+
+**역할 분리:**
+1:1 메시지 본문은 HTTP(`POST /messages/send`)로 DB에 저장합니다. WebSocket(STOMP)은 저장 **커밋 이후** 수신자에게 알림만 push합니다 (`convertAndSendToUser(username, "/queue/notifications", NotificationDTO)`).
 
 **WebSocket 프로토콜:**
 HTTP Polling 방식의 오버헤드와 리소스 낭비를 해결하기 위해 양방향 통신이 가능한 WebSocket을 도입했습니다.
 
-**STOMP가 다수의 세션 중에서 특정 수신자를 찾아 메시지를 라우팅하는 방법:** <br>
+**STOMP가 다수의 세션 중에서 특정 수신자를 찾아 알림을 라우팅하는 방법:** <br>
 Spring 내부의 메시지 브로커가 관리하는 "SimpUserRegistry"가 그 대답입니다.<br>
-발신자가 특정 유저를 향해 메시지를 보내면 (예: `/user/{userId}/queue/msg`), Spring은 "SimpUserRegistry"를 조회합니다. 이 레지스트리는 현재 연결된 사용자의 식별자(Principal), WebSocket 세션 ID, 그리고 구독 상태를 메모리에 보관하고 있어, 논리적인 유저 경로를 실제 물리적인 세션 경로(예: `/queue/msg-user123`)로 변환하여 수신자에게 정확히 매핑해 줍니다.
+서버가 `convertAndSendToUser(수신자 username, "/queue/notifications", payload)` 로 발행하면, Spring은 "SimpUserRegistry"를 조회합니다. 이 레지스트리는 현재 연결된 사용자의 식별자(Principal 이름 = username), WebSocket 세션 ID, 그리고 구독 상태를 메모리에 보관하고 있어, 논리 경로 `/user/{username}/queue/notifications`를 실제 세션 큐로 변환해 수신자에게 매핑합니다.
 <br>
 <br>
 **단일 서버(In-Memory) 아키텍처의 한계와 스케일아웃(Scale-out) 고려사항:** <br>
 현재 구조에서 "SimpUserRegistry"는 데이터를 Spring 애플리케이션의 JVM 힙(Heap) 메모리 영역에 저장합니다. 이는 단일 서버 환경에서는 매우 빠르고 효율적이지만, 다중 서버(Scale-out)로 확장할 경우 한계가 생깁니다.<br>
-A 서버에 접속한 유저와 B 서버에 접속한 유저는 서로의 힙 메모리에 접근할 수 없으므로, 서로 메시지를 주고받을 수 없는 "세션 단절" 문제가 발생하게 됩니다. <br>
+A 서버에 접속한 유저와 B 서버에 접속한 유저는 서로의 힙 메모리에 접근할 수 없으므로, 서로 알림을 주고받을 수 없는 "세션 단절" 문제가 발생하게 됩니다. <br>
 이러한 한계를 극복하고 분산 환경에서 완벽한 실시간 통신을 보장하기 위해서는, Spring 내장 브로커 대신 "RabbitMQ"나 "Redis Pub/Sub"과 같은 외부 메시지 브로커(External Message Broker)를 도입해야 함을 인지하고 있습니다.<br>
 외부 브로커를 도입하면 모든 서버 노드가 하나의 중앙 브로커를 통해 Pub/Sub 방식으로 메시지를 브로드캐스트하고 구독 정보를 동기화함으로써, 유저가 어느 서버에 연결되어 있든 완벽한 라우팅 일관성을 유지할 수 있게 됩니다.<br>
 

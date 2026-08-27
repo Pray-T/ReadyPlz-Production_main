@@ -17,4 +17,4 @@
 ### [2.4 이메일 비밀번호 재설정 기능](./2.4-email_reset.md)
 <br>
 
-### [2.5 WebSocket을 통한 실시간 채팅 기능 및 STOMP를 활용한 수신자/발신자 라우팅](./2.5-websocket_chat.md)
+### [2.5 WebSocket을 통한 실시간 알림 및 STOMP 사용자별 라우팅](./2.5-websocket_chat.md)

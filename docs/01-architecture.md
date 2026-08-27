@@ -15,26 +15,30 @@
 서버 사이드 렌더링(SSR)을 통해 초기 로딩 속도 향상을 의도했습니다.<br>
 <br>
   (2). Security Layer (보안 및 인증) <br>
-HTTP 요청: SecurityConfig에 등록된 JwtAuthenticationFilter를 거쳐 토큰의 유효성을 검사하고 SecurityContext에 인증 객체를 저장합니다. <br>
+HTTP 요청: SecurityConfig에 등록된 JwtAuthenticationFilter(`CsrfFilter` 앞)가 토큰을 검사하고 SecurityContext에 인증 객체를 저장합니다. Cookie CSRF는 `NonClearingCookieCsrfTokenRepository` + `CsrfCookieFilter`로 `XSRF-TOKEN`을 유지·발급합니다. <br>
 WebSocket 요청: STOMP 프로토콜 연결 시 WebSocketAuthChannelInterceptor가 개입하여, 소켓 세션이 맺어지기 전 쿠키 기반 JWT를 검증함으로써 허가되지 않은 사용자의 알림 연결을 차단합니다. <br>
 <br>
   (3). Controller Layer (표현 계층)<br>
 클라이언트의 요청을 받아 해당 Service로 위임하고, 결과를 View나 JSON 형태로 반환합니다.<br>
-AuthController, LoginController: JWT 발급 및 로그인 흐름 제어<br>
-GameController, MemberController: 도메인별 비즈니스 요청 처리<br>
-MessageController: HTTP 기반 1:1 메시징 처리 (`POST /messages/send` 등). 실시간 알림만 `MessageService`가 STOMP로 push<br>
+AuthController, LoginController: JWT 발급 및 로그인 화면<br>
+GameController, MemberController: 게임 컬렉션·회원가입/비밀번호 재설정 화면<br>
+ProfileController: 프로필·닉네임·비밀번호 변경·계정 삭제<br>
+MessageController: HTTP 기반 1:1 메시징 (`POST /messages/send` 등). 실시간 알림만 `MessageService`가 STOMP로 push<br>
+AdminController: JSON 게임 적재 (`POST /admin/db/load-json-games`)<br>
+HomeController, HealthController: 홈(`/`, `/home`)과 ELB 헬스(`GET /health`)<br>
 <br>
   (4). Service Layer (비즈니스 로직 계층)<br>
 트랜잭션(@Transactional) 경계를 설정하고 예외 처리를 담당합니다.<br>
 CustomUserDetailsService: Spring Security 인증 시 DB에서 유저 정보를 로드합니다.<br>
-TokenService: Redis와 연동하여 Refresh Token 검증 및 Access Token 재발급 로직을 수행합니다.<br>
-JsonToDbService: 관리자(Admin)가 초기 게임 데이터를 JSON 파일로부터 읽어 DB에 적재하는 자동화 로직을 담당합니다.<br>
+TokenService: Redis에 Access/Refresh 활성 토큰과 블랙리스트를 저장·조회합니다. 토큰 발급·갱신 HTTP 흐름은 `AuthController`가 담당합니다.<br>
+JsonToDbService + GameImportBatchService: 관리자(Admin)가 JSON에서 게임 데이터를 읽어 배치 적재합니다.<br>
+EmailService: 비밀번호 재설정 메일을 `@Async`로 발송합니다.<br>
 <br>
   (5). Repository & Domain Layer (데이터 접근 및 도메인 계층)<br>
 Spring Data JPA를 사용하여 데이터베이스 접근 로직을 추상화하고, 객체 지향적인 도메인 모델을 구축했습니다.<br>
 <br>
   (6). Database Layer<br>
-MySQL: 회원 정보, 게임 리스트, 채팅 메시지 내역 등 영구적으로 보존되어야 하는 데이터를 관리합니다.<br>
+MySQL: 회원 정보, 게임 리스트, 1:1 메시지 내역 등 영구적으로 보존되어야 하는 데이터를 관리합니다.<br>
 Redis (In-Memory DB): 휘발성이 강하고 I/O 속도가 빨라야 하는 JWT 활성 토큰(Access/Refresh) 및 블랙리스트(로그아웃 처리)를 관리하여 DB의 부하를 줄입니다. WebSocket 세션 저장용이 아닙니다.
 <br>
 <br>
@@ -69,8 +73,8 @@ Member ↔ Message (1:N): 하나의 회원은 송신자(Sender) 또는 수신자
 <br><br>
 [로그아웃]
   Client → POST /api/auth/logout
-    → Access Token 블랙리스트 등록 (Redis)
-    → 사용자 토큰 전체 삭제 (Redis)
+    → Access Token·Refresh Token 블랙리스트 등록 (Redis)
+    → 사용자 활성 토큰 키 삭제 (Redis)
     → Cookie 삭제 (maxAge=0)
 <br><br>
 [매 요청마다]
@@ -132,7 +136,7 @@ POST /admin/db/load-json-games
     → classpath:steam_games_data.json 파일 읽기
     → JSON 파싱 (appid, name, headerImage, releaseDate)
     → 배치 처리 (1000개 단위)
-      → 기존 DB 중복 확인 (appid, name)
+      → 기존 DB 중복 확인 (appid, 이름은 대소문자 무시 — MySQL utf8mb4_unicode_ci unique와 맞춤)
       → 신규 게임만 Game 엔티티로 변환 후 저장
     → 결과 로깅 (저장/건너뜀/유효하지않음 카운트)
 
