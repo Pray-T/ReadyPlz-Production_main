@@ -95,7 +95,6 @@ Member ↔ Message (1:N): 하나의 회원은 송신자(Sender) 또는 수신자
     → 내 게임 목록 조회
     → 게임 검색 (Steam DB 기반, 페이징)
     → 같은 게임을 가진 다른 유저 조회 (DTO 프로젝션으로 N+1 방지)
-
   POST /games/collection/add-game
     → 최대 5개 제한 검증 → MemberGame 생성/저장
   POST /games/collection/remove-game
@@ -111,10 +110,13 @@ Member ↔ Message (1:N): 하나의 회원은 송신자(Sender) 또는 수신자
   GET /messages
     → 대화 목록 조회 (상대방, 마지막 메시지, 읽지 않은 수)
     → ROLE_ADMIN 계정은 대화 목록에서 필터링
+    <br>
   GET /messages/{otherMemberId}
     → 특정 상대와의 대화 내역 조회 (페이징)
+    <br>
   POST /messages/send
     → 메시지 전송 (대화 상대별 1000개 제한, 초과 시 해당 대화의 오래된 10개 자동 삭제)
+    <br>
   GET /messages/game/{gameId}/users
     → 특정 게임의 다른 유저 목록 조회 (자신 제외)
 
