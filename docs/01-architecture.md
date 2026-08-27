@@ -83,28 +83,31 @@ Member ↔ Message (1:N): 하나의 회원은 송신자(Sender) 또는 수신자
 
 
 ## 1.4 USER 계정 기능
-
+**로그인 후 홈(`/`, `/home`)에서 게임 목록·메시지·프로필로 진입합니다.**
+<br>
 <img width="520" alt="로그인된 홈" src="./images/home-logged-in.png" />
 <br>
-로그인 후 홈(`/`, `/home`)에서 게임 목록·메시지·프로필로 진입합니다.
 <br>
 <br>
 
-[게임 컬렉션 관리] <br>
+**[게임 컬렉션 관리]** <br>
   GET /games/collection
     → 내 게임 목록 조회
     → 게임 검색 (Steam DB 기반, 페이징)
     → 같은 게임을 가진 다른 유저 조회 (DTO 프로젝션으로 N+1 방지)
 
-<img width="640" alt="같은 게임을 가진 유저가 펼쳐진 게임 컬렉션" src="./images/collection-same-game-users.png" />
-<br>
-  
   POST /games/collection/add-game
     → 최대 5개 제한 검증 → MemberGame 생성/저장
   POST /games/collection/remove-game
     → MemberGame 관계 삭제
 
-[메시징]<br>
+
+<img width="640" alt="같은 게임을 가진 유저가 펼쳐진 게임 컬렉션" src="./images/collection-same-game-users.png" />
+<br>
+  
+  
+**[메시징]**
+<br>
   GET /messages
     → 대화 목록 조회 (상대방, 마지막 메시지, 읽지 않은 수)
     → ROLE_ADMIN 계정은 대화 목록에서 필터링
@@ -120,27 +123,33 @@ Member ↔ Message (1:N): 하나의 회원은 송신자(Sender) 또는 수신자
 <img width="520" alt="1:1 대화" src="./images/conversation-1on1.png" />
 <br>
 <br>
-[문의하기]<br>
+
+**[문의하기]**
+<br>
   POST /messages/inquiry
     → ADMIN 계정을 자동으로 찾아서 "[문의]" 접두사와 함께 메시지 전송
 
 <img width="520" alt="홈 문의하기 모달" src="./images/inquiry-modal.png" />
 <br>
 <br>
-[프로필 관리]<br>
-  GET /members/profile → 프로필 페이지 (내 게임, 닉네임 등)
-  POST /members/profile/confirm-nickname → 닉네임 변경 확인 페이지
-  POST /members/profile/update-nickname-confirmed → 닉네임 변경 확정 (중복 검증)
-  POST /members/profile/change-password → 비밀번호 변경 (현재 비밀번호 확인)
-  POST /members/profile/delete-account → 계정 삭제 (비밀번호 + 이메일 확인)
+
+**[프로필 관리]**
+<br>
+  GET /members/profile → 프로필 페이지 (내 게임, 닉네임 등) <br> 
+  POST /members/profile/confirm-nickname → 닉네임 변경 확인 페이지 <br>
+  POST /members/profile/update-nickname-confirmed → 닉네임 변경 확정 (중복 검증) <br>
+  POST /members/profile/change-password → 비밀번호 변경 (현재 비밀번호 확인) <br>
+  POST /members/profile/delete-account → 계정 삭제 (비밀번호 + 이메일 확인) <br>
 
 <img width="520" alt="프로필 닉네임·비밀번호 변경" src="./images/profile.png" />
 <br>
 <br>
-[비밀번호 재설정]<br>
-  POST /members/reset-request → 이메일로 재설정 링크 발송 (비동기)
-  GET  /members/reset-password?token=... → 토큰 검증 후 재설정 페이지
-  POST /members/reset-password → 새 비밀번호 저장
+
+**[비밀번호 재설정]**
+<br>
+  POST /members/reset-request → 이메일로 재설정 링크 발송 (비동기) <br>
+  GET  /members/reset-password?token=... → 토큰 검증 후 재설정 페이지 <br>
+  POST /members/reset-password → 새 비밀번호 저장 <br>
 
 ## 1.5 ADMIN 계정 흐름
 접근 제어: <br>
