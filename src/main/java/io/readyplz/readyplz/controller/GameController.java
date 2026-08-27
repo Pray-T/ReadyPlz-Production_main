@@ -4,6 +4,7 @@ import io.readyplz.readyplz.domain.Game;
 import io.readyplz.readyplz.domain.Member;
 import io.readyplz.readyplz.domain.MemberGame;
 import io.readyplz.readyplz.dto.SteamGameDetailDTO;
+import io.readyplz.readyplz.dto.summary.GameCollectionItemDTO;
 import io.readyplz.readyplz.service.MemberGameService;
 import io.readyplz.readyplz.service.GameService;
 import io.readyplz.readyplz.service.MemberService;
@@ -20,8 +21,10 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Controller
@@ -49,9 +52,9 @@ public class GameController {
         Member member = memberService.findByUsername(username);
 
         List<SteamGameDetailDTO> userGames = memberGameService.getMemberGames(member);
-        List<Long> userGameIds = userGames.stream()
+        Set<Long> userGameIds = userGames.stream()
                 .map(SteamGameDetailDTO::getId)
-                .collect(Collectors.toList());
+                .collect(Collectors.toCollection(HashSet::new));
 
         model.addAttribute("userGames", userGames);
         model.addAttribute("member", member);
@@ -59,37 +62,30 @@ public class GameController {
 
         if (!userGameIds.isEmpty()) {
             Map<Long, List<io.readyplz.readyplz.dto.summary.MemberSummaryDTO>> sameGameUsersMap =
-                    memberGameService.getSameGameUsersForAllGames(userGameIds, member.getId());
+                    memberGameService.getSameGameUsersForAllGames(List.copyOf(userGameIds), member.getId());
             model.addAttribute("sameGameUsersMap", sameGameUsersMap);
         } else {
             model.addAttribute("sameGameUsersMap", new HashMap<>());
         }
 
-        if (search != null && !search.trim().isEmpty()) {
-            Pageable pageable = PageRequest.of(safePage, safeSize, Sort.by("name").ascending());
-            Page<Game> gamesPage = gameService.findByName(search.trim(), pageable);
-            List<Game> games = gamesPage.getContent();
+        Pageable pageable = PageRequest.of(safePage, safeSize, Sort.by("name").ascending());
+        boolean hasSearch = search != null && !search.trim().isEmpty();
+        Page<Game> gamesPage = hasSearch
+                ? gameService.findByName(search.trim(), pageable)
+                : gameService.findAll(pageable);
 
-            games.forEach(game -> game.setUserHasGame(userGameIds.contains(game.getId())));
+        List<GameCollectionItemDTO> games = gamesPage.getContent().stream()
+                .map(game -> new GameCollectionItemDTO(
+                        game.getId(),
+                        game.getName(),
+                        userGameIds.contains(game.getId())))
+                .toList();
 
-            model.addAttribute("games", games);
-            model.addAttribute("currentPage", safePage);
-            model.addAttribute("totalPages", gamesPage.getTotalPages());
-            model.addAttribute("totalElements", gamesPage.getTotalElements());
-            model.addAttribute("hasResults", true);
-        } else {
-            Pageable pageable = PageRequest.of(safePage, safeSize, Sort.by("name").ascending());
-            Page<Game> gamesPage = gameService.findAll(pageable);
-            List<Game> games = gamesPage.getContent();
-
-            games.forEach(game -> game.setUserHasGame(userGameIds.contains(game.getId())));
-
-            model.addAttribute("games", games);
-            model.addAttribute("currentPage", safePage);
-            model.addAttribute("totalPages", gamesPage.getTotalPages());
-            model.addAttribute("totalElements", gamesPage.getTotalElements());
-            model.addAttribute("hasResults", !games.isEmpty());
-        }
+        model.addAttribute("games", games);
+        model.addAttribute("currentPage", safePage);
+        model.addAttribute("totalPages", gamesPage.getTotalPages());
+        model.addAttribute("totalElements", gamesPage.getTotalElements());
+        model.addAttribute("hasResults", hasSearch || !games.isEmpty());
         return "games/collection";
     }
 

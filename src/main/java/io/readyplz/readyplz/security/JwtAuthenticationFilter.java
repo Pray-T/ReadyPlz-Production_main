@@ -16,6 +16,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -25,10 +26,36 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
+    private static final AntPathMatcher PATH_MATCHER = new AntPathMatcher();
+    private static final String[] SKIP_PATHS = {
+            "/css/**",
+            "/js/**",
+            "/images/**",
+            "/static/**",
+            "/health"
+    };
+
     private final JwtTokenUtil jwtTokenUtil;
     private final UserDetailsService userDetailsService;
     private final TokenService tokenService;
 
+    @Override
+    protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
+        String path = request.getServletPath();
+        if (path == null || path.isEmpty()) {
+            path = request.getRequestURI();
+            String contextPath = request.getContextPath();
+            if (contextPath != null && !contextPath.isEmpty() && path.startsWith(contextPath)) {
+                path = path.substring(contextPath.length());
+            }
+        }
+        for (String pattern : SKIP_PATHS) {
+            if (PATH_MATCHER.match(pattern, path)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     @Override 
     protected void doFilterInternal( 

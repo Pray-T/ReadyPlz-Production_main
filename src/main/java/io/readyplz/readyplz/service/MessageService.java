@@ -135,6 +135,11 @@ public class MessageService {
 		throw new IllegalArgumentException("메시지를 보낼 권한이 없습니다. 같은 게임을 보유한 사용자에게만 보낼 수 있습니다.");
 	}
 
+	@Transactional
+	public void markConversationAsRead(Long myId, Long otherMemberId) {
+		messageRepository.markConversationAsRead(myId, otherMemberId);
+	}
+
 	public Page<io.readyplz.readyplz.dto.summary.MessageSummaryDTO> getConversation(Long memberId1, Long memberId2, Pageable pageable) {
 		return messageRepository.findConversation(memberId1, memberId2, pageable);
 	}

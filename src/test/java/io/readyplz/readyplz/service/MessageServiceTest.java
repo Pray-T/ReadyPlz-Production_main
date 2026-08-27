@@ -139,6 +139,15 @@ class MessageServiceTest {
 		verify(messageRepository, never()).save(any());
 	}
 
+	@Test
+	void markConversationAsRead_delegatesToRepositoryWithReceiverAsMe() {
+		when(messageRepository.markConversationAsRead(1L, 2L)).thenReturn(3);
+
+		messageService.markConversationAsRead(1L, 2L);
+
+		verify(messageRepository).markConversationAsRead(1L, 2L);
+	}
+
 	private void stubSuccessfulSend(Member sender, Member receiver) {
 		when(memberRepository.findById(2L)).thenReturn(Optional.of(receiver));
 		when(memberRepository.findById(1L)).thenReturn(Optional.of(sender));

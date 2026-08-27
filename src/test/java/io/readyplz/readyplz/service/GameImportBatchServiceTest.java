@@ -52,4 +52,22 @@ class GameImportBatchServiceTest {
         assertThat(secondRun[1]).isEqualTo(1);
         assertThat(gameRepository.findAll()).hasSize(1);
     }
+
+    @Test
+    void processBatch_skipsCaseInsensitiveNameDuplicatesInSameBatch() {
+        SteamGameDTO upper = new SteamGameDTO();
+        upper.setAppId(142200L);
+        upper.setName("STREET FIGHTER X TEKKEN");
+
+        SteamGameDTO mixed = new SteamGameDTO();
+        mixed.setAppId(204120L);
+        mixed.setName("Street Fighter X Tekken");
+
+        int[] result = gameImportBatchService.processBatch(List.of(upper, mixed));
+
+        assertThat(result[0]).isEqualTo(1);
+        assertThat(result[1]).isEqualTo(1);
+        assertThat(gameRepository.findAll()).hasSize(1);
+        assertThat(gameRepository.findAll().get(0).getAppid()).isEqualTo(142200);
+    }
 }

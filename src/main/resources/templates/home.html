@@ -154,11 +154,11 @@
             <!-- 사용자가 'ROLE_ADMIN' 권한을 가지고 있을 때만 이 섹션이 보입니다. -->
             <section class="admin-panel mt-5 p-3 border rounded" sec:authorize="hasRole('ADMIN')">
                 <h3 class="mb-3">관리자 패널</h3>
-                <p>JSON 파일에서 게임 정보를 데이터베이스에 로드합니다. 이 방법은 빠르고 안정적입니다.</p>
-                <button type="button" class="btn btn-primary" onclick="loadJsonGames()">JSON 파일에서 게임 정보 로드</button>
+                <p>JSON 파일에서 게임 정보를 데이터베이스에 로드합니다.</p>
+                <button type="button" id="loadJsonGamesBtn" class="btn btn-primary" onclick="loadJsonGames(event)">JSON 파일에서 게임 정보 로드</button>
                 <div id="loadJsonStatus" class="mt-3" style="display: none;">
-                    <div class="alert alert-info">
-                        <div class="spinner-border spinner-border-sm me-2" role="status">
+                    <div id="loadJsonAlert" class="alert alert-info mb-0">
+                        <div id="loadJsonSpinner" class="spinner-border spinner-border-sm me-2" role="status">
                             <span class="visually-hidden">Loading...</span>
                         </div>
                         <span id="loadJsonMessage">JSON 파일에서 게임 정보를 로드하는 중...</span>
@@ -208,41 +208,70 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stomp-websocket@2.3.4-next/lib/stomp.min.js"></script>
     <script src="/js/auth.js"></script>
     <script src="/js/apiClient.js"></script>
     <script>
+        function looksLikeHtml(text) {
+            return typeof text === 'string' && /<\s*!doctype|<\s*html/i.test(text);
+        }
+
+        function summarizeHttpError(status, body) {
+            if (looksLikeHtml(body)) {
+                if (status === 401 || status === 403) {
+                    return '권한이 없거나 CSRF 토큰이 없습니다. 다시 로그인한 뒤 시도해주세요.';
+                }
+                return `요청이 거부되었습니다 (HTTP ${status}). 다시 로그인한 뒤 시도해주세요.`;
+            }
+            return (body && body.trim()) || `HTTP error! status: ${status}`;
+        }
+
         // JSON 파일에서 게임 정보 로드 함수
-        async function loadJsonGames() {
+        async function loadJsonGames(event) {
             const statusDiv = document.getElementById('loadJsonStatus');
+            const alertDiv = document.getElementById('loadJsonAlert');
+            const spinner = document.getElementById('loadJsonSpinner');
             const messageSpan = document.getElementById('loadJsonMessage');
-            const button = event.target;
-            
-            try {
-                // 상태 표시
+            const button = (event && event.currentTarget) || document.getElementById('loadJsonGamesBtn');
+
+            if (!statusDiv || !alertDiv || !messageSpan || !button) {
+                console.error('관리자 패널 DOM 요소를 찾을 수 없습니다.');
+                return;
+            }
+
+            const setStatus = (type, message, showSpinner) => {
                 statusDiv.style.display = 'block';
+                alertDiv.className = `alert alert-${type} mb-0`;
+                if (spinner) {
+                    spinner.style.display = showSpinner ? 'inline-block' : 'none';
+                }
+                messageSpan.textContent = message;
+            };
+
+            try {
                 button.disabled = true;
-                messageSpan.textContent = 'JSON 파일에서 게임 정보를 로드하는 중...';
-                
-                // JWT 토큰 가져오기
+                setStatus('info', 'JSON 파일에서 게임 정보를 로드하는 중...', true);
+
                 if (!authManager.isAuthenticated()) {
                     throw new Error('인증 토큰이 없습니다. 다시 로그인해주세요.');
                 }
-                
-                // API 호출
+
                 const response = await apiClient.postJson('/admin/db/load-json-games', {}, { auth: true });
-                
+
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    const errorBody = await response.text();
+                    throw new Error(summarizeHttpError(response.status, errorBody));
                 }
-                
+
                 const result = await response.text();
-                
-                // 성공 메시지 표시
-                statusDiv.innerHTML = `<div class="alert alert-success">${result}</div>`;
-                
+                if (looksLikeHtml(result)) {
+                    throw new Error('인증/CSRF 검증에 실패했습니다. 로그아웃 후 다시 로그인한 뒤 시도해주세요.');
+                }
+                setStatus('success', result, false);
             } catch (error) {
                 console.error('Error:', error);
-                statusDiv.innerHTML = `<div class="alert alert-danger">오류가 발생했습니다: ${error.message}</div>`;
+                setStatus('danger', `오류가 발생했습니다: ${error.message}`, false);
             } finally {
                 button.disabled = false;
             }

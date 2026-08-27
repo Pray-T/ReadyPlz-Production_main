@@ -50,7 +50,7 @@ public class Member {
     private LocalDateTime resetTokenExpiry;
 
     // ★★★★★ Role과의 Many-to-Many 관계 추가 ★★★★★
-    @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
         name = "member_roles", // 중간 테이블의 이름
         joinColumns = @JoinColumn(name = "member_id"), // Member 테이블의 FK

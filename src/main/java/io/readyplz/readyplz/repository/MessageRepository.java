@@ -95,6 +95,11 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
     Page<Object[]> findConversationsForUser(@Param("userId") Long userId, Pageable pageable);
     
     
+    @Modifying
+    @Query("update Message m set m.isRead = true "
+            + "where m.receiver.id = :me and m.sender.id = :other and m.isRead = false")
+    int markConversationAsRead(@Param("me") Long me, @Param("other") Long other);
+
     @Query("SELECT COUNT(m) FROM Message m WHERE (m.sender.id = :a AND m.receiver.id = :b) "
             + "OR (m.sender.id = :b AND m.receiver.id = :a)")
     long countConversationBetween(@Param("a") Long memberIdA, @Param("b") Long memberIdB);

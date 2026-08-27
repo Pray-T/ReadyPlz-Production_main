@@ -2,11 +2,17 @@ package io.readyplz.readyplz.controller;
 
 import io.readyplz.readyplz.dto.CountryDTO;
 import io.readyplz.readyplz.dto.MemberForm;
+import io.readyplz.readyplz.dto.request.ResetPasswordRequest;
 import io.readyplz.readyplz.service.MemberService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -61,27 +67,36 @@ public class MemberController {
     }
 
     @PostMapping("/reset-password")
-    public String handleResetPassword(@RequestParam("token") String token, @RequestParam("password") String password, @RequestParam("passwordConfirm") String passwordConfirm, RedirectAttributes redirectAttributes) {
-        if (!password.equals(passwordConfirm)) {
-            redirectAttributes.addFlashAttribute("error", "비밀번호가 일치하지 않습니다.");
-            redirectAttributes.addAttribute("token", token);
-            return "redirect:/members/reset-password";
-        }
-        if (password.length() < 8 || password.length() > 20) {
-            redirectAttributes.addFlashAttribute("error", "비밀번호는 8~20자 사이여야 합니다.");
-            redirectAttributes.addAttribute("token", token);
+    public String handleResetPassword(@Valid @ModelAttribute ResetPasswordRequest request,
+                                      BindingResult bindingResult,
+                                      RedirectAttributes redirectAttributes) {
+        if (bindingResult.hasErrors()) {
+            redirectAttributes.addFlashAttribute("error", validationErrorMessage(bindingResult));
+            redirectAttributes.addAttribute("token", request.getToken());
             return "redirect:/members/reset-password";
         }
 
         try {
-            memberService.resetPassword(token, password);
+            memberService.resetPassword(request.getToken(), request.getPassword());
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
-            redirectAttributes.addAttribute("token", token);
+            redirectAttributes.addAttribute("token", request.getToken());
             return "redirect:/members/reset-password";
         }
 
         redirectAttributes.addFlashAttribute("msg", "비밀번호가 성공적으로 변경되었습니다.");
         return "redirect:/members/loginForm";
+    }
+
+    private static String validationErrorMessage(BindingResult bindingResult) {
+        FieldError fieldError = bindingResult.getFieldError();
+        if (fieldError != null && fieldError.getDefaultMessage() != null && !fieldError.getDefaultMessage().isBlank()) {
+            return fieldError.getDefaultMessage();
+        }
+        ObjectError globalError = bindingResult.getGlobalError();
+        if (globalError != null && globalError.getDefaultMessage() != null && !globalError.getDefaultMessage().isBlank()) {
+            return globalError.getDefaultMessage();
+        }
+        return "입력값을 확인해주세요.";
     }
 } 

@@ -12,7 +12,6 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
@@ -48,7 +47,6 @@ public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
                 if (jwtTokenUtil.validateToken(jwt, userDetails)
                         && tokenService.isActiveAccessToken(username, jwt)) {
                     Authentication auth = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                    SecurityContextHolder.getContext().setAuthentication(auth);
                     accessor.setUser(auth);
                 } else {
                     throw new IllegalStateException("Invalid token");

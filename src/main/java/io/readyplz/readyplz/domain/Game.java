@@ -33,11 +33,6 @@ public class Game {
     @Column(name = "release_date")
     private LocalDate releaseDate;
 
-    // 사용자가 해당 게임을 가지고 있는지 표시하는 임시 필드 (DB에 저장되지 않음)
-    @Transient
-    @Setter
-    private boolean userHasGame = false;
-
     // Game과 MemberGame의 연관관계 (Game 하나는 여러 MemberGame을 가질 수 있음)
     // 이 게임을 소유한 사용자 목록을 가져오기 위한 관계
     @OneToMany(mappedBy = "game", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.LAZY)

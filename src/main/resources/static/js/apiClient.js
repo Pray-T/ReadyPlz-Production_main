@@ -104,9 +104,20 @@ class ApiClient {
 		return match ? decodeURIComponent(match[1]) : null;
 	}
 
+	/** SSR 폼 hidden _csrf를 현재 XSRF-TOKEN 쿠키와 동기화 (WS 등으로 쿠키가 바뀐 경우 대비) */
+	syncCsrfForms(root = document) {
+		const token = this.getCsrfToken();
+		if (!token || !root) {
+			return;
+		}
+		root.querySelectorAll('input[name="_csrf"]').forEach((input) => {
+			input.value = token;
+		});
+	}
+
 	handleAuthFailure(autoRedirect) {
 		try {
-			if (this.authManager) this.authManager.clearTokens();
+			if (this.authManager) this.authManager.clearSession();
 		} finally {
 			if (autoRedirect) {
 				try {
@@ -156,5 +167,11 @@ class ApiClient {
 // 전역 인스턴스 노출 (authManager는 auth.js에서 생성됨)
 // auth.js보다 늦게 로드되도록 스크립트 순서를 보장해야 함
 window.apiClient = new ApiClient(window.authManager);
+
+document.addEventListener('submit', function (event) {
+	if (event.target && event.target.tagName === 'FORM' && window.apiClient) {
+		window.apiClient.syncCsrfForms(event.target);
+	}
+}, true);
 
 

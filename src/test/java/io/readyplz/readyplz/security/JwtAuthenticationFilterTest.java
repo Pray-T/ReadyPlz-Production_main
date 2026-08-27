@@ -3,6 +3,7 @@ package io.readyplz.readyplz.security;
 import io.readyplz.readyplz.service.TokenService;
 import io.readyplz.readyplz.util.JwtTokenUtil;
 import jakarta.servlet.FilterChain;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -16,6 +17,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -55,6 +57,20 @@ class JwtAuthenticationFilterTest {
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
         verify(filterChain).doFilter(request, response);
+    }
+
+    @Test
+    void shouldNotFilter_skipsStaticPathsEvenWithAccessTokenCookie() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/css/style.css");
+        request.setServletPath("/css/style.css");
+        request.setCookies(new Cookie("accessToken", "token-value"));
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        jwtAuthenticationFilter.doFilter(request, response, filterChain);
+
+        verify(filterChain).doFilter(request, response);
+        verify(tokenService, never()).isBlacklisted(anyString());
+        verify(userDetailsService, never()).loadUserByUsername(anyString());
     }
 
     @Test

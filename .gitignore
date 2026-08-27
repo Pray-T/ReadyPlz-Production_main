@@ -2,6 +2,9 @@
 .gradle/
 build/
 
+### IDE/빌드 출력 (Eclipse, VS Code Java 등) ###
+bin/
+
 ### 컴파일·실행 산출물 ###
 *.class
 *.jar
@@ -55,3 +58,7 @@ Thumbs.db
 
 ### 로컬 전용 설정 (JWT 등 비밀값) ###
 src/main/resources/application-local.properties
+
+### 커밋 위생 — 인수인계·강의 자료 (버그픽스와 분리) ###
+status.md
+강의/

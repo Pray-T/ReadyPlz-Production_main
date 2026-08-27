@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -40,15 +41,18 @@ public class GameImportBatchService {
         List<Integer> batchAppIds = validDtos.stream()
                 .map(dto -> dto.getAppId().intValue())
                 .collect(Collectors.toList());
-        List<String> batchNames = validDtos.stream()
-                .map(SteamGameDTO::getName)
+        List<String> batchNameKeys = validDtos.stream()
+                .map(dto -> normalizeNameKey(dto.getName()))
+                .distinct()
                 .collect(Collectors.toList());
 
         List<Integer> existingAppIds = gameRepository.findExistingAppids(batchAppIds);
         Set<Integer> existingAppIdSet = new HashSet<>(existingAppIds);
 
-        List<String> existingNames = gameRepository.findExistingNames(batchNames);
-        Set<String> existingNameSet = new HashSet<>(existingNames);
+        List<String> existingNames = gameRepository.findExistingNamesIgnoreCase(batchNameKeys);
+        Set<String> existingNameSet = existingNames.stream()
+                .map(GameImportBatchService::normalizeNameKey)
+                .collect(Collectors.toCollection(HashSet::new));
 
         Set<Integer> seenAppIds = new HashSet<>(existingAppIdSet);
         Set<String> seenNames = new HashSet<>(existingNameSet);
@@ -56,11 +60,11 @@ public class GameImportBatchService {
         List<Game> toSave = new ArrayList<>();
         for (SteamGameDTO dto : validDtos) {
             Integer appId = dto.getAppId().intValue();
-            String name = dto.getName();
-            if (!seenAppIds.contains(appId) && !seenNames.contains(name)) {
+            String nameKey = normalizeNameKey(dto.getName());
+            if (!seenAppIds.contains(appId) && !seenNames.contains(nameKey)) {
                 toSave.add(dto.toEntity());
                 seenAppIds.add(appId);
-                seenNames.add(name);
+                seenNames.add(nameKey);
             } else {
                 skippedCount++;
             }
@@ -72,5 +76,10 @@ public class GameImportBatchService {
         }
 
         return new int[]{savedCount, skippedCount, invalidCount};
+    }
+
+    /** MySQL utf8mb4_unicode_ci unique(name)과 맞게 대소문자를 무시해 비교한다. */
+    private static String normalizeNameKey(String name) {
+        return name.toLowerCase(Locale.ROOT);
     }
 }

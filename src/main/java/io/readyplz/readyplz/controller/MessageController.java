@@ -61,6 +61,8 @@ public class MessageController {
             return "redirect:/messages?error=access_denied";
         }
 
+        messageService.markConversationAsRead(member.getId(), otherMemberId);
+
         Page<io.readyplz.readyplz.dto.summary.MessageSummaryDTO> conversationPage =
                 messageService.getConversation(member.getId(), otherMemberId, pageable);
         List<io.readyplz.readyplz.dto.summary.MessageSummaryDTO> conversation = conversationPage.getContent();

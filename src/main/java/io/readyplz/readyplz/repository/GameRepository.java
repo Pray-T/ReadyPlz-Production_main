@@ -77,4 +77,11 @@ public interface GameRepository extends JpaRepository<Game, Long> {
     @Query("select g.name from Game g where g.name in :names")
     List<String> findExistingNames(@Param("names") List<String> names);
 
+    /**
+     * 대소문자 무시로 이미 DB에 존재하는 게임 이름들을 조회합니다.
+     * {@code names}는 미리 lower-case 된 키를 넣는 것을 전제로 합니다.
+     */
+    @Query("select g.name from Game g where lower(g.name) in :names")
+    List<String> findExistingNamesIgnoreCase(@Param("names") List<String> names);
+
 }

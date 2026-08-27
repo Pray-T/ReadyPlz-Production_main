@@ -1,6 +1,8 @@
 package io.readyplz.readyplz.config;
 
+import io.readyplz.readyplz.security.CsrfCookieFilter;
 import io.readyplz.readyplz.security.JwtAuthenticationFilter;
+import io.readyplz.readyplz.security.NonClearingCookieCsrfTokenRepository;
 import io.readyplz.readyplz.service.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -17,8 +19,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.AuthenticationEntryPoint;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.security.web.csrf.CsrfFilter;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -39,9 +42,14 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        // SSR 폼(_csrf)과 JS(X-XSRF-TOKEN 쿠키 복사)가 동일한 raw 토큰을 쓰도록 XOR 핸들러는 사용하지 않음
+        CsrfTokenRequestAttributeHandler csrfRequestHandler = new CsrfTokenRequestAttributeHandler();
+        csrfRequestHandler.setCsrfRequestAttributeName("_csrf");
+
         http
             .csrf(csrf -> csrf
-                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                .csrfTokenRepository(new NonClearingCookieCsrfTokenRepository())
+                .csrfTokenRequestHandler(csrfRequestHandler)
                 .ignoringRequestMatchers("/api/**"))
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(auth -> auth
@@ -66,7 +74,9 @@ public class SecurityConfig {
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
             .authenticationProvider(authenticationProvider())
-            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+            // CSRF 검사 전에 JWT를 적용해야, CSRF 실패 시 로그인 리다이렉트(로그아웃처럼 보임)를 피함
+            .addFilterBefore(jwtAuthFilter, CsrfFilter.class)
+            .addFilterAfter(new CsrfCookieFilter(), BasicAuthenticationFilter.class);
         
         return http.build();
     }
