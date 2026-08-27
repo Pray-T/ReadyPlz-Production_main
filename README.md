@@ -22,6 +22,35 @@ Spring Boot 기반으로 JWT·Redis 인증, WebSocket(STOMP) 알림, MySQL/JPA, 
 | Security | Spring Security |
 | Infra | AWS(EC2·ELB·RDS) |
 
+## 화면
+
+<p align="center">
+  <img src="./docs/images/collection-same-game-users.png" alt="게임 컬렉션에서 같은 게임을 가진 유저 목록" width="720" />
+</p>
+<p align="center"><em>같은 Steam 게임을 고른 유저에게 메시지를 보낼 수 있습니다.</em></p>
+
+<p align="center">
+  <img src="./docs/images/home-logged-in.png" alt="로그인된 홈 화면" width="560" />
+</p>
+<p align="center"><em>로그인 후 홈에서 게임 목록·메시지·프로필로 이동합니다.</em></p>
+
+<p align="center">
+  <img src="./docs/images/conversation-1on1.png" alt="1:1 대화 화면" width="560" />
+</p>
+<p align="center"><em>메시지 본문은 HTTP로 저장되는 1:1 대화 화면입니다.</em></p>
+
+<p align="center">
+  <img src="./docs/images/realtime-stomp-alert.png" alt="메시지 도착 STOMP 알림" width="720" />
+</p>
+<p align="center"><em>저장이 끝난 뒤 수신자에게 실시간 알림이 도착합니다.</em></p>
+
+<p align="center">
+  <img src="./docs/images/admin-json-load.png" alt="관리자 JSON 게임 적재" width="520" />
+</p>
+<p align="center"><em>Steam API를 실시간 호출하지 않고, 관리자가 JSON을 DB에 적재합니다.</em></p>
+
+대화 목록·문의·프로필 화면은 <a href="./docs/01-architecture.md">아키텍처 개요</a>와 <a href="./docs/2.5-websocket_chat.md">2.5 실시간 알림</a>에 있습니다.
+
 ## 아키텍쳐 및 주요 기능·동작
 
 <p align="center">

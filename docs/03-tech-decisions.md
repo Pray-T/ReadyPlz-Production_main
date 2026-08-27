@@ -52,6 +52,12 @@
 **역할 분리:**
 1:1 메시지 본문은 HTTP(`POST /messages/send`)로 DB에 저장합니다. WebSocket(STOMP)은 저장 **커밋 이후** 수신자에게 알림만 push합니다 (`convertAndSendToUser(username, "/queue/notifications", NotificationDTO)`).
 
+<img width="640" alt="발신 대화와 수신자 STOMP 알림" src="./images/realtime-stomp-alert.png" />
+<br>
+왼쪽은 HTTP로 저장된 대화, 오른쪽은 커밋 이후 수신자에게 도착한 실시간 알림입니다.
+<br>
+<br>
+
 **WebSocket 프로토콜:**
 HTTP Polling 방식의 오버헤드와 리소스 낭비를 해결하기 위해 양방향 통신이 가능한 WebSocket을 도입했습니다.
 

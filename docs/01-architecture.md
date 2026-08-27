@@ -83,11 +83,21 @@ Member ↔ Message (1:N): 하나의 회원은 송신자(Sender) 또는 수신자
 
 
 ## 1.4 USER 계정 기능
+
+<img width="520" alt="로그인된 홈" src="./images/home-logged-in.png" />
+<br>
+로그인 후 홈(`/`, `/home`)에서 게임 목록·메시지·프로필로 진입합니다.
+<br>
+<br>
+
 [게임 컬렉션 관리] <br>
   GET /games/collection
     → 내 게임 목록 조회
     → 게임 검색 (Steam DB 기반, 페이징)
     → 같은 게임을 가진 다른 유저 조회 (DTO 프로젝션으로 N+1 방지)
+
+<img width="640" alt="같은 게임을 가진 유저가 펼쳐진 게임 컬렉션" src="./images/collection-same-game-users.png" />
+<br>
   
   POST /games/collection/add-game
     → 최대 5개 제한 검증 → MemberGame 생성/저장
@@ -104,11 +114,19 @@ Member ↔ Message (1:N): 하나의 회원은 송신자(Sender) 또는 수신자
     → 메시지 전송 (대화 상대별 1000개 제한, 초과 시 해당 대화의 오래된 10개 자동 삭제)
   GET /messages/game/{gameId}/users
     → 특정 게임의 다른 유저 목록 조회 (자신 제외)
-<br><br>
+
+<img width="520" alt="대화 목록" src="./images/messages-list.png" />
+<br>
+<img width="520" alt="1:1 대화" src="./images/conversation-1on1.png" />
+<br>
+<br>
 [문의하기]<br>
   POST /messages/inquiry
     → ADMIN 계정을 자동으로 찾아서 "[문의]" 접두사와 함께 메시지 전송
 
+<img width="520" alt="홈 문의하기 모달" src="./images/inquiry-modal.png" />
+<br>
+<br>
 [프로필 관리]<br>
   GET /members/profile → 프로필 페이지 (내 게임, 닉네임 등)
   POST /members/profile/confirm-nickname → 닉네임 변경 확인 페이지
@@ -116,6 +134,9 @@ Member ↔ Message (1:N): 하나의 회원은 송신자(Sender) 또는 수신자
   POST /members/profile/change-password → 비밀번호 변경 (현재 비밀번호 확인)
   POST /members/profile/delete-account → 계정 삭제 (비밀번호 + 이메일 확인)
 
+<img width="520" alt="프로필 닉네임·비밀번호 변경" src="./images/profile.png" />
+<br>
+<br>
 [비밀번호 재설정]<br>
   POST /members/reset-request → 이메일로 재설정 링크 발송 (비동기)
   GET  /members/reset-password?token=... → 토큰 검증 후 재설정 페이지
@@ -140,6 +161,9 @@ POST /admin/db/load-json-games
       → 신규 게임만 Game 엔티티로 변환 후 저장
     → 결과 로깅 (저장/건너뜀/유효하지않음 카운트)
 
+<img width="520" alt="관리자 JSON 게임 적재 성공" src="./images/admin-json-load.png" />
+<br>
+<br>
 (2). USER 문의 수신 <br>
 사용자가 POST /messages/inquiry 호출 시
   → MemberService.findAdminMember()로 ADMIN 계정 자동 탐색
