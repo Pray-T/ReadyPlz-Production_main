@@ -22,8 +22,10 @@ Spring Boot 기반으로 JWT·Redis 인증, WebSocket(STOMP) 알림, MySQL/JPA, 
 | Security | Spring Security |
 | Infra | AWS(EC2·ELB·RDS) |
 
+## 화면
+
 <details>
-<summary><strong>화면(클릭시 스크린샷이 펼쳐집니다.)</strong></summary>
+<summary>클릭시 스크린샷이 펼쳐집니다.</summary>
 <br/>
 
 <p align="center">
