@@ -4,10 +4,12 @@
 *아래 링크를 클릭하시면 해당 상세 페이지로 이동합니다.*
 
 #  2. 주요 기능
-
+컬렉션·1:1 메시지·실시간 알림 화면 (상세설명은 아래 2.5와 <a href="./01-architecture.md">1장 아키텍처</a>를 참고하세요.)
+<br>
+<br>
 <img width="560" alt="게임 컬렉션에서 같은 게임을 가진 유저" src="./images/collection-same-game-users.png" />
 <br>
-컬렉션·1:1 메시지·실시간 알림 화면의 상세는 아래 2.5와 <a href="./01-architecture.md">1장 아키텍처</a>를 참고하세요.
+
 <br>
 <br>
 
