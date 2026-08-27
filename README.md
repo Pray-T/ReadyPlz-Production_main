@@ -22,7 +22,9 @@ Spring Boot 기반으로 JWT·Redis 인증, WebSocket(STOMP) 알림, MySQL/JPA, 
 | Security | Spring Security |
 | Infra | AWS(EC2·ELB·RDS) |
 
-## 화면
+<details>
+<summary><strong>화면(클릭시 스크린샷이 펼쳐집니다.)</strong></summary>
+<br/>
 
 <p align="center">
   <img src="./docs/images/collection-same-game-users.png" alt="게임 컬렉션에서 같은 게임을 가진 유저 목록" width="720" />
@@ -50,6 +52,8 @@ Spring Boot 기반으로 JWT·Redis 인증, WebSocket(STOMP) 알림, MySQL/JPA, 
 <p align="center"><em>Steam API를 실시간 호출하지 않고, 관리자가 JSON을 DB에 적재합니다.</em></p>
 
 대화 목록·문의·프로필 화면은 <a href="./docs/01-architecture.md">아키텍처 개요</a>와 <a href="./docs/2.5-websocket_chat.md">2.5 실시간 알림</a>에 있습니다.
+
+</details>
 
 ## 아키텍쳐 및 주요 기능·동작
 
