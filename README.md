@@ -75,6 +75,8 @@ Spring Boot 기반으로 JWT·Redis 인증, WebSocket(STOMP) 알림, MySQL/JPA, 
  <br><br>
 - Spring Security: `JwtAuthenticationFilter`를 `CsrfFilter` **앞**에 배치 + **CSRF 활성**(`NonClearingCookieCsrfTokenRepository` + `CsrfCookieFilter`, `/api/**`만 예외). JWT `STATELESS`에서 매 요청 인증 시 `XSRF-TOKEN` 쿠키가 지워지지 않게 하고, GET에도 쿠키를 내려줌 
 <br><br>
+- API 예외(`RestApiExceptionHandler`): 검증 실패·깨진 JSON·필수 파라미터 누락은 400, 인증은 401, 권한은 403, 없는 정적 자원은 404, 허용하지 않은 메서드는 405, 충돌은 409, 그 외 예상 밖 예외는 500입니다. 500은 고정 문구이고 예외 원문은 넣지 않으며, 로그인 폼(`GET /members/loginForm`)은 `msgCode`·`errorCode`가 없거나 없는 메시지 키여도 JSON이 아니라 폼 HTML입니다.
+<br><br>
 - 게임 컬렉션·동일 게임 유저 조회 (Steam 데이터는 JSON → DB 사전 적재, 실시간 Steam API 호출 없음)
  <br><br>
 - 회원 1:1 메시징은 **HTTP** (`MessageController`, `POST /messages/send` 등). `MessageService.sendMessage`가 DB 저장 후 트랜잭션 **afterCommit** 시점에만 `SimpMessagingTemplate.convertAndSendToUser(수신자 username, /queue/notifications, payload)`로 실시간 알림 push. 클라이언트는 사용자 이름을 경로에 넣지 않고 `/user/queue/notifications`를 구독한다. 페이로드는 `NotificationDTO{type, message, data}`(예: `type="MESSAGE"`, `data`=발신자 닉네임)이며, 브로커 발행 실패는 try/catch로 격리되어 저장·HTTP 응답에 영향 없음. 메시지 한 건 저장은 발신자·수신자의 메시지 컬렉션 전체를 읽지 않는다
