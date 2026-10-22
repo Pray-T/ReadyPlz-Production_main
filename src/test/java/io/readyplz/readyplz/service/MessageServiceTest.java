@@ -7,6 +7,8 @@ import io.readyplz.readyplz.dto.notification.NotificationDTO;
 import io.readyplz.readyplz.repository.MemberGameRepository;
 import io.readyplz.readyplz.repository.MemberRepository;
 import io.readyplz.readyplz.repository.MessageRepository;
+import org.hibernate.Hibernate;
+import org.hibernate.collection.spi.PersistentBag;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,6 +23,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -137,6 +140,44 @@ class MessageServiceTest {
 
 		verify(messagingTemplate, never()).convertAndSendToUser(any(), any(), any());
 		verify(messageRepository, never()).save(any());
+	}
+
+	@Test
+	void sendMessage_savesParticipantsWithoutInitializingMessageCollections() {
+		PersistentBag<Message> senderSent = new PersistentBag<>();
+		PersistentBag<Message> senderReceived = new PersistentBag<>();
+		PersistentBag<Message> receiverSent = new PersistentBag<>();
+		PersistentBag<Message> receiverReceived = new PersistentBag<>();
+		Member sender = Member.builder()
+				.id(1L)
+				.username("senderUser")
+				.nickname("발신닉")
+				.sentMessages(senderSent)
+				.receivedMessages(senderReceived)
+				.build();
+		Member receiver = Member.builder()
+				.id(2L)
+				.username("receiverUser")
+				.nickname("수신닉")
+				.sentMessages(receiverSent)
+				.receivedMessages(receiverReceived)
+				.build();
+		stubSuccessfulSend(sender, receiver);
+
+		Message saved = messageService.sendMessage(1L, 2L, "hello");
+
+		assertEquals(sender, saved.getSender());
+		assertEquals(receiver, saved.getReceiver());
+		assertEquals("hello", saved.getContent());
+		assertFalse(Hibernate.isInitialized(sender.getSentMessages()));
+		assertFalse(Hibernate.isInitialized(sender.getReceivedMessages()));
+		assertFalse(Hibernate.isInitialized(receiver.getSentMessages()));
+		assertFalse(Hibernate.isInitialized(receiver.getReceivedMessages()));
+
+		ArgumentCaptor<Message> savedCaptor = ArgumentCaptor.forClass(Message.class);
+		verify(messageRepository).save(savedCaptor.capture());
+		assertEquals(1L, savedCaptor.getValue().getSender().getId());
+		assertEquals(2L, savedCaptor.getValue().getReceiver().getId());
 	}
 
 	@Test

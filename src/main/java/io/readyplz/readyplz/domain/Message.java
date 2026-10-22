@@ -51,22 +51,13 @@ public class Message {
         this.isRead = true;
     }
 
-    // 정적 팩토리: 명확한 생성 의도 제공 + 양방향 연관관계 일관성 유지
+    // FK는 sender/receiver에 있다. sentMessages/receivedMessages는 mappedBy 역방향이라
+    // 여기서 contains/add 하지 않는다. 그 호출은 LAZY 컬렉션을 초기화해 회원 전체 이력을 SELECT한다.
     public static Message create(Member sender, Member receiver, String content) {
         Message message = new Message();
         message.sender = sender;
         message.receiver = receiver;
         message.content = content;
-        if (sender != null) {
-            if (!sender.getSentMessages().contains(message)) {
-                sender.getSentMessages().add(message);
-            }
-        }
-        if (receiver != null) {
-            if (!receiver.getReceivedMessages().contains(message)) {
-                receiver.getReceivedMessages().add(message);
-            }
-        }
         return message;
     }
 
