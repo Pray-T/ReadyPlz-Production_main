@@ -93,9 +93,11 @@ Spring Boot 기반으로 JWT·Redis 인증, WebSocket(STOMP) 알림, MySQL/JPA, 
 
 ## 로컬 실행
 
+이 저장소는 현재 운영하지 않는다. 로컬은 dev 프로필이고, MySQL 계정 예시는 `application-dev.properties`의 `readyplz`이다. 본인 PC 계정이 다르면 `application-dev.properties`의 로컬 계정만 바꾸면 된다.
+
 ### 사전 준비
 - JDK 17+
-- MySQL (`readyplz` 또는 dev 프로필 시 `readyplz_dev`)
+- MySQL (`readyplz`)
 - Redis (`localhost:6379`)
 - JWT 시크릿: 환경 변수 `JWT_SECRET` 또는(dev) `application-local.properties`의 `jwt.secret`  
   (`application-local.properties`는 Git 제외 — `src/main/resources/application-local.properties`에 예: `jwt.secret=로컬용 시크릿 키를 입력해주세요`)
@@ -104,7 +106,7 @@ Spring Boot 기반으로 JWT·Redis 인증, WebSocket(STOMP) 알림, MySQL/JPA, 
 운영/기본 설정은 `spring.jpa.hibernate.ddl-auto=validate` 이라 **빈 DB만 있으면 기동이 실패**합니다. 로컬 최초 1회는 스키마를 만든 뒤 validate로 되돌리세요.
 
 ```sql
-CREATE DATABASE readyplz_dev
+CREATE DATABASE readyplz
   CHARACTER SET utf8mb4
   COLLATE utf8mb4_unicode_ci;
 ```
