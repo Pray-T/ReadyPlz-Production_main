@@ -213,6 +213,8 @@ Windows:
 gradlew.bat test
 ```
 
+`gradlew`의 실행 비트가 저장소에 들어 있어 Linux/macOS에서 `./gradlew test`를 실행할 수 있습니다. 스크립트 줄바꿈은 LF로 유지됩니다.
+
 <br/>
 
 ---
