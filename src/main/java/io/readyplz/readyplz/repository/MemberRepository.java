@@ -1,7 +1,9 @@
 package io.readyplz.readyplz.repository;
 
 import io.readyplz.readyplz.domain.Member; // Member 엔티티 클래스를 임포트합니다.
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository; // JpaRepository를 임포트합니다.
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.query.Param;
@@ -33,6 +35,14 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     boolean existsByNicknameAndIdNot(String nickname, Long id);
 
     Optional<Member> findByResetToken(String resetToken);
+
+    /**
+     * 컬렉션 추가 트랜잭션에서 이 회원 행만 비관적 쓰기 잠금합니다.
+     * 다른 회원 행은 잠그지 않습니다.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select m from Member m where m.id = :id")
+    Optional<Member> findByIdForUpdate(@Param("id") Long id);
 
     /** 역할명으로 회원 조회 (정렬 후 상위 N건 — 관리자 단일 조회용) */
     @Query("select m from Member m join m.roles r where r.name = :roleName order by m.id asc")

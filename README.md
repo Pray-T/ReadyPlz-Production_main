@@ -77,7 +77,7 @@ Spring Boot 기반으로 JWT·Redis 인증, WebSocket(STOMP) 알림, MySQL/JPA, 
 <br><br>
 - API 예외(`RestApiExceptionHandler`): 검증 실패·깨진 JSON·필수 파라미터 누락은 400, 인증은 401, 권한은 403, 없는 정적 자원은 404, 허용하지 않은 메서드는 405, 충돌은 409, 그 외 예상 밖 예외는 500입니다. 500은 고정 문구이고 예외 원문은 넣지 않으며, 로그인 폼(`GET /members/loginForm`)은 `msgCode`·`errorCode`가 없거나 없는 메시지 키여도 JSON이 아니라 폼 HTML입니다.
 <br><br>
-- 게임 컬렉션·동일 게임 유저 조회 (Steam 데이터는 JSON → DB 사전 적재, 실시간 Steam API 호출 없음)
+- 게임 컬렉션·동일 게임 유저 조회 (Steam 데이터는 JSON → DB 사전 적재, 실시간 Steam API 호출 없음). 한 회원의 게임은 최대 5개이고, 추가는 회원 행 잠금이 걸린 한 트랜잭션이라 동시 요청에도 5개를 넘지 않습니다.
  <br><br>
 - 회원 1:1 메시징은 **HTTP** (`MessageController`, `POST /messages/send` 등). `MessageService.sendMessage`가 DB 저장 후 트랜잭션 **afterCommit** 시점에만 `SimpMessagingTemplate.convertAndSendToUser(수신자 username, /queue/notifications, payload)`로 실시간 알림 push. 클라이언트는 사용자 이름을 경로에 넣지 않고 `/user/queue/notifications`를 구독한다. 페이로드는 `NotificationDTO{type, message, data}`(예: `type="MESSAGE"`, `data`=발신자 닉네임)이며, 브로커 발행 실패는 try/catch로 격리되어 저장·HTTP 응답에 영향 없음. 메시지 한 건 저장은 발신자·수신자의 메시지 컬렉션 전체를 읽지 않는다
  <br><br>
@@ -201,6 +201,7 @@ gradlew.bat bootRun --args="--spring.profiles.active=dev"
 | WebSocket | `WebSocketAuthChannelInterceptorTest` | 본인 `/user/queue/notifications` 구독, 타인·브로커 구독과 SEND 거절, CONNECT 토큰·Redis |
 | 회원 | `MemberServiceTest` | 닉네임 유지/중복 거부, 비밀번호 변경·재설정 시 본인 토큰만 삭제 |
 | 게임 import | `GameImportBatchServiceTest` | 배치 저장·대소문자 무시 중복 스킵 |
+| 게임 컬렉션 | `MemberGameServiceTest`, `GameControllerAddGameTest` | 회원 행 잠금이 걸린 한 트랜잭션에서 최대 5개, 동시 추가·중복 거부 |
 | 예외 | `RestApiExceptionHandlerTest` | 404/400/405와 API 오류 응답 메시지 노출 제한 |
 | 지원 | `TestRedisConfig` | 테스트용 Redis 빈 |
 

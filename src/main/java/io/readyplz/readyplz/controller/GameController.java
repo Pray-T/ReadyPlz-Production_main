@@ -2,9 +2,9 @@ package io.readyplz.readyplz.controller;
 
 import io.readyplz.readyplz.domain.Game;
 import io.readyplz.readyplz.domain.Member;
-import io.readyplz.readyplz.domain.MemberGame;
 import io.readyplz.readyplz.dto.SteamGameDetailDTO;
 import io.readyplz.readyplz.dto.summary.GameCollectionItemDTO;
+import io.readyplz.readyplz.exception.AlreadyOwnedGameException;
 import io.readyplz.readyplz.service.MemberGameService;
 import io.readyplz.readyplz.service.GameService;
 import io.readyplz.readyplz.service.MemberService;
@@ -35,8 +35,6 @@ public class GameController {
     private final GameService gameService;
     private final MemberService memberService;
     private final MemberGameService memberGameService;
-
-    private static final int MAX_SELECTED_GAMES = 5;
 
     @GetMapping("/collection")
     public String gameCollection(@RequestParam(value = "page", defaultValue = "0") int page,
@@ -95,26 +93,10 @@ public class GameController {
         try {
             String username = auth.getName();
             Member member = memberService.findByUsername(username);
-
-            Game game = gameService.findById(gameId);
-
-            if (memberGameService.existsByMemberAndGame(member, game)) {
-                return ResponseEntity.ok("이미 보유한 게임입니다.");
-            }
-
-            long selectedCount = memberGameService.countByMember(member);
-            if (selectedCount >= MAX_SELECTED_GAMES) {
-                return ResponseEntity.badRequest().body("최대 5개까지 선택 가능합니다. 기존 게임을 삭제하고 다시 추가해주세요.");
-            }
-
-            MemberGame memberGame = MemberGame.builder()
-                    .member(member)
-                    .game(game)
-                    .build();
-
-            memberGameService.save(memberGame);
-
+            memberGameService.addGameToCollection(member.getId(), gameId);
             return ResponseEntity.ok("게임이 컬렉션에 추가되었습니다.");
+        } catch (AlreadyOwnedGameException e) {
+            return ResponseEntity.ok(MemberGameService.ALREADY_OWNED_MESSAGE);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (Exception e) {

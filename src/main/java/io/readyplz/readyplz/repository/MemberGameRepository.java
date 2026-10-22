@@ -36,6 +36,20 @@ public interface MemberGameRepository extends JpaRepository<MemberGame, Long> { 
     //특정 회원이 가진 모든 MemberGame 관계의 수를 조회합니다.
     long countByMember(Member member);
 
+    /**
+     * 회원 id로 컬렉션 개수를 센다.
+     * (member_id, game_id) 유니크 인덱스의 앞 컬럼인 member_id로 조회한다.
+     */
+    @Query("select count(mg) from MemberGame mg where mg.member.id = :memberId")
+    long countByMemberId(@Param("memberId") Long memberId);
+
+    /**
+     * 잠금을 잡은 트랜잭션 안에서 같은 게임 중복을 먼저 거절할 때 사용한다.
+     */
+    @Query("select case when count(mg) > 0 then true else false end from MemberGame mg "
+            + "where mg.member.id = :memberId and mg.game.id = :gameId")
+    boolean existsByMemberIdAndGameId(@Param("memberId") Long memberId, @Param("gameId") Long gameId);
+
      //단일 DELETE 쿼리로 회원-게임 관계를 삭제합니다.
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("delete from MemberGame mg where mg.member = :member and mg.game = :game")
