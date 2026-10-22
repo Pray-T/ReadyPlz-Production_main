@@ -63,7 +63,7 @@ HTTP Polling 방식의 오버헤드와 리소스 낭비를 해결하기 위해 �
 
 **STOMP가 다수의 세션 중에서 특정 수신자를 찾아 알림을 라우팅하는 방법:** <br>
 Spring 내부의 메시지 브로커가 관리하는 "SimpUserRegistry"가 그 대답입니다.<br>
-서버가 `convertAndSendToUser(수신자 username, "/queue/notifications", payload)` 로 발행하면, Spring은 "SimpUserRegistry"를 조회합니다. 이 레지스트리는 현재 연결된 사용자의 식별자(Principal 이름 = username), WebSocket 세션 ID, 그리고 구독 상태를 메모리에 보관하고 있어, 논리 경로 `/user/{username}/queue/notifications`를 실제 세션 큐로 변환해 수신자에게 매핑합니다.
+서버가 `convertAndSendToUser(수신자 username, "/queue/notifications", payload)` 로 발행하면, Spring은 "SimpUserRegistry"를 조회합니다. 이 레지스트리는 현재 연결된 사용자의 식별자(Principal 이름 = username), WebSocket 세션 ID, 그리고 구독 상태를 메모리에 보관하고 있어, 그 사용자의 세션 큐로 알림을 매핑합니다. 클라이언트가 구독하는 경로는 사용자 이름이 없는 `/user/queue/notifications`입니다. 사용자 이름을 넣은 경로, `/queue/**`, `/topic/**` 구독과 클라이언트의 STOMP SEND는 `WebSocketAuthChannelInterceptor`가 거절합니다.
 <br>
 <br>
 **단일 서버(In-Memory) 아키텍처의 한계와 스케일아웃(Scale-out) 고려사항:** <br>

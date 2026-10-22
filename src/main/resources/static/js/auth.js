@@ -134,7 +134,7 @@ class AuthManager {
                 this.wsReconnectTimer = null;
             }
 
-            this.stompClient.subscribe(`/user/${this.username}/queue/notifications`, (notification) => {
+            this.stompClient.subscribe('/user/queue/notifications', (notification) => {
                 try {
                     const payload = JSON.parse(notification.body);
                     this.handleIncomingNotification(payload);

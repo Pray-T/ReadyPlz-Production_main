@@ -16,7 +16,7 @@
 <br>
   (2). Security Layer (보안 및 인증) <br>
 HTTP 요청: SecurityConfig에 등록된 JwtAuthenticationFilter(`CsrfFilter` 앞)가 토큰을 검사하고 SecurityContext에 인증 객체를 저장합니다. Cookie CSRF는 `NonClearingCookieCsrfTokenRepository` + `CsrfCookieFilter`로 `XSRF-TOKEN`을 유지·발급합니다. <br>
-WebSocket 요청: STOMP 프로토콜 연결 시 WebSocketAuthChannelInterceptor가 개입하여, 소켓 세션이 맺어지기 전 쿠키 기반 JWT를 검증함으로써 허가되지 않은 사용자의 알림 연결을 차단합니다. <br>
+WebSocket 요청: WebSocketAuthChannelInterceptor가 CONNECT에서 쿠키 또는 Authorization 헤더의 JWT, 블랙리스트, Redis 활성 토큰을 검사합니다. SUBSCRIBE는 인증된 사용자의 `/user/queue/notifications`만 허용하고, 다른 사용자 큐와 `/queue/**`, `/topic/**`, 클라이언트의 STOMP SEND는 거절합니다. 메시지 저장은 HTTP입니다. <br>
 <br>
   (3). Controller Layer (표현 계층)<br>
 클라이언트의 요청을 받아 해당 Service로 위임하고, 결과를 View나 JSON 형태로 반환합니다.<br>
@@ -56,14 +56,14 @@ Member ↔ Message (1:N): 하나의 회원은 송신자(Sender) 또는 수신자
     → BCrypt 비밀번호 암호화
     → ROLE_USER 자동 부여
     → DB 저장
-    → 자동 로그인 (JWT 발급 → HttpOnly Cookie 설정)
+    → 자동 로그인 (JWT 발급 → 로그인과 같은 AuthCookieFactory 쿠키: HttpOnly, SameSite=Lax, Secure는 request.isSecure()일 때만)
 <br><br>
 [로그인]
   Client → POST /api/auth/login (username, password)
     → AuthenticationManager 인증
     → Access Token (1시간) + Refresh Token (7일) 생성
     → Redis에 토큰 저장
-    → HttpOnly Cookie로 클라이언트에 전달
+    → HttpOnly, SameSite=Lax 쿠키로 전달 (Secure는 request.isSecure()일 때. 프록시의 X-Forwarded-Proto=https는 server.forward-headers-strategy=framework가 반영)
 <br><br>
 [토큰 갱신]
   Client → POST /api/auth/refresh (refreshToken Cookie)
@@ -140,7 +140,7 @@ Member ↔ Message (1:N): 하나의 회원은 송신자(Sender) 또는 수신자
   GET /members/profile → 프로필 페이지 (내 게임, 닉네임 등) <br> 
   POST /members/profile/confirm-nickname → 닉네임 변경 확인 페이지 <br>
   POST /members/profile/update-nickname-confirmed → 닉네임 변경 확정 (중복 검증) <br>
-  POST /members/profile/change-password → 비밀번호 변경 (현재 비밀번호 확인) <br>
+  POST /members/profile/change-password → 비밀번호 변경 (현재 비밀번호 확인). 성공 시 그 계정의 Redis Access·Refresh 토큰을 지우고 인증 쿠키를 만료시킨 뒤 로그인 화면으로 이동 <br>
   POST /members/profile/delete-account → 계정 삭제 (비밀번호 + 이메일 확인) <br>
 
 <img width="520" alt="프로필 닉네임·비밀번호 변경" src="./images/profile.png" />
@@ -151,7 +151,7 @@ Member ↔ Message (1:N): 하나의 회원은 송신자(Sender) 또는 수신자
 <br>
   POST /members/reset-request → 이메일로 재설정 링크 발송 (비동기) <br>
   GET  /members/reset-password?token=... → 토큰 검증 후 재설정 페이지 <br>
-  POST /members/reset-password → 새 비밀번호 저장 <br>
+  POST /members/reset-password → 새 비밀번호 저장. 성공 시 그 계정의 Redis Access·Refresh 토큰을 지우고 인증 쿠키를 만료시킨 뒤 로그인 화면으로 이동 <br>
 
 ## 1.5 ADMIN 계정 흐름
 접근 제어: <br>

@@ -77,9 +77,9 @@ Spring Boot 기반으로 JWT·Redis 인증, WebSocket(STOMP) 알림, MySQL/JPA, 
 <br><br>
 - 게임 컬렉션·동일 게임 유저 조회 (Steam 데이터는 JSON → DB 사전 적재, 실시간 Steam API 호출 없음)
  <br><br>
-- 회원 1:1 메시징은 **HTTP** (`MessageController`, `POST /messages/send` 등). `MessageService.sendMessage`가 DB 저장 후 트랜잭션 **afterCommit** 시점에만 `SimpMessagingTemplate.convertAndSendToUser(수신자 username, /queue/notifications, payload)`로 실시간 알림 push. 페이로드는 `NotificationDTO{type, message, data}`(예: `type="MESSAGE"`, `data`=발신자 닉네임)이며, 브로커 발행 실패는 try/catch로 격리되어 저장·HTTP 응답에 영향 없음
+- 회원 1:1 메시징은 **HTTP** (`MessageController`, `POST /messages/send` 등). `MessageService.sendMessage`가 DB 저장 후 트랜잭션 **afterCommit** 시점에만 `SimpMessagingTemplate.convertAndSendToUser(수신자 username, /queue/notifications, payload)`로 실시간 알림 push. 클라이언트는 사용자 이름을 경로에 넣지 않고 `/user/queue/notifications`를 구독한다. 페이로드는 `NotificationDTO{type, message, data}`(예: `type="MESSAGE"`, `data`=발신자 닉네임)이며, 브로커 발행 실패는 try/catch로 격리되어 저장·HTTP 응답에 영향 없음
  <br><br>
-- WebSocket(STOMP/SockJS): 엔드포인트 `/ws-nearby-gamers`, SimpleBroker `/queue`·`/topic`, 유저 접두사 `/user`, 쿠키 기반 JWT 연결 인증(`WebSocketConfig`, `WebSocketAuthChannelInterceptor`, principal 이름=username). Redis는 WebSocket 세션 저장용이 아니라 JWT용
+- WebSocket(STOMP/SockJS): 엔드포인트 `/ws-nearby-gamers`, SimpleBroker `/queue`·`/topic`, 유저 접두사 `/user`, 쿠키 기반 JWT 연결 인증(`WebSocketConfig`, `WebSocketAuthChannelInterceptor`, principal 이름=username). STOMP는 CONNECT뿐 아니라 SUBSCRIBE/SEND도 검사한다. 인증된 사용자는 `/user/queue/notifications`만 구독할 수 있고, 클라이언트의 STOMP SEND는 모두 거절된다. Redis는 WebSocket 세션 저장용이 아니라 JWT용
  <br><br>
 - 비동기 이메일 비밀번호 재설정 (`EmailService` + `@Async`). `MemberService`가 토큰을 DB에 저장한 뒤 트랜잭션 **afterCommit** 시점에만 메일을 발송하여, 커밋 전 발송으로 인한 토큰 미조회를 방지 
 <br><br>
@@ -196,6 +196,7 @@ gradlew.bat bootRun --args="--spring.profiles.active=dev"
 | JWT 필터 | `JwtAuthenticationFilterTest` | Redis 활성 토큰 일치/불일치 |
 | 인증 세션 | `AuthSessionTest` | 비밀번호 변경·재설정 후 세션 종료, refresh 401, 쿠키 Secure |
 | 메시징 | `MessageServiceTest` | afterCommit 알림 push, 저장 실패·롤백 시 미발행 |
+| WebSocket | `WebSocketAuthChannelInterceptorTest` | 본인 `/user/queue/notifications` 구독, 타인·브로커 구독과 SEND 거절, CONNECT 토큰·Redis |
 | 회원 | `MemberServiceTest` | 닉네임 유지/중복 거부, 비밀번호 변경·재설정 시 본인 토큰만 삭제 |
 | 게임 import | `GameImportBatchServiceTest` | 배치 저장·대소문자 무시 중복 스킵 |
 | 예외 | `RestApiExceptionHandlerTest` | API 오류 응답 메시지 노출 제한 |
