@@ -2,14 +2,18 @@ package io.readyplz.readyplz.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.BindingResult;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -63,11 +67,40 @@ public class RestApiExceptionHandler {
 		return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "접근 권한이 없습니다."));
 	}
 
+	// Exception 핸들러보다 구체적인 타입만 둔다. 본문에는 고정 문구만 넣는다.
+	@ExceptionHandler(NoResourceFoundException.class)
+	public ResponseEntity<Map<String, Object>> handleNoResourceFound(NoResourceFoundException ex) {
+		log.debug("없는 정적 자원 요청 ({})", ex.getClass().getSimpleName());
+		return fixedMessage(HttpStatus.NOT_FOUND, "요청한 리소스를 찾을 수 없습니다.");
+	}
+
+	@ExceptionHandler(HttpMessageNotReadableException.class)
+	public ResponseEntity<Map<String, Object>> handleMessageNotReadable(HttpMessageNotReadableException ex) {
+		log.debug("읽을 수 없는 요청 본문 ({})", ex.getClass().getSimpleName());
+		return fixedMessage(HttpStatus.BAD_REQUEST, "요청 본문을 확인할 수 없습니다.");
+	}
+
+	@ExceptionHandler(MissingServletRequestParameterException.class)
+	public ResponseEntity<Map<String, Object>> handleMissingParameter(MissingServletRequestParameterException ex) {
+		log.debug("필수 파라미터 누락 ({})", ex.getClass().getSimpleName());
+		return fixedMessage(HttpStatus.BAD_REQUEST, "필수 항목이 누락되었습니다.");
+	}
+
+	@ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+	public ResponseEntity<Map<String, Object>> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex) {
+		log.debug("허용되지 않은 HTTP 메서드 ({})", ex.getClass().getSimpleName());
+		return fixedMessage(HttpStatus.METHOD_NOT_ALLOWED, "허용되지 않은 메서드입니다.");
+	}
+
 	@ExceptionHandler(Exception.class)
 	public ResponseEntity<Map<String, Object>> handleGeneral(Exception ex) {
 		log.error("처리되지 않은 서버 오류", ex);
 		Map<String, Object> body = new HashMap<>();
 		body.put("message", "서버 오류가 발생했습니다.");
 		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
+	}
+
+	private static ResponseEntity<Map<String, Object>> fixedMessage(HttpStatus status, String message) {
+		return ResponseEntity.status(status).body(Map.of("message", message));
 	}
 }

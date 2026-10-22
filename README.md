@@ -199,7 +199,7 @@ gradlew.bat bootRun --args="--spring.profiles.active=dev"
 | WebSocket | `WebSocketAuthChannelInterceptorTest` | 본인 `/user/queue/notifications` 구독, 타인·브로커 구독과 SEND 거절, CONNECT 토큰·Redis |
 | 회원 | `MemberServiceTest` | 닉네임 유지/중복 거부, 비밀번호 변경·재설정 시 본인 토큰만 삭제 |
 | 게임 import | `GameImportBatchServiceTest` | 배치 저장·대소문자 무시 중복 스킵 |
-| 예외 | `RestApiExceptionHandlerTest` | API 오류 응답 메시지 노출 제한 |
+| 예외 | `RestApiExceptionHandlerTest` | 404/400/405와 API 오류 응답 메시지 노출 제한 |
 | 지원 | `TestRedisConfig` | 테스트용 Redis 빈 |
 
 ```bash
