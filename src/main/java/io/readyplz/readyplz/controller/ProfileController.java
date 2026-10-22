@@ -2,8 +2,10 @@ package io.readyplz.readyplz.controller;
 
 import io.readyplz.readyplz.config.JwtProperties;
 import io.readyplz.readyplz.domain.Member;
+import io.readyplz.readyplz.security.AuthCookieFactory;
 import io.readyplz.readyplz.service.MemberService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -14,8 +16,6 @@ import io.readyplz.readyplz.dto.request.ChangePasswordRequest;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import io.readyplz.readyplz.dto.request.DeleteAccountRequest;
 import io.readyplz.readyplz.service.TokenService;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseCookie;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -25,6 +25,7 @@ import org.springframework.validation.ObjectError;
 
 import java.util.List;
 
+@Slf4j
 @Controller
 @RequiredArgsConstructor
 public class ProfileController {
@@ -32,6 +33,7 @@ public class ProfileController {
     private final MemberService memberService;
     private final TokenService tokenService;
     private final JwtProperties jwtProperties;
+    private final AuthCookieFactory authCookieFactory;
 
     private void blacklistSessionTokens(HttpServletRequest request) {
         String accessToken = null;
@@ -114,24 +116,7 @@ public class ProfileController {
             // 4) 성공 시에만 토큰 무효화 및 쿠키 삭제 (로그아웃과 동일: 블랙리스트 후 Redis 삭제)
             blacklistSessionTokens(httpRequest);
             tokenService.deleteUserTokens(username);
-
-            boolean secure = httpRequest.isSecure();
-            ResponseCookie deleteAccessCookie = ResponseCookie.from("accessToken", "")
-                .httpOnly(true)
-                .secure(secure)
-                .sameSite("Lax")
-                .path("/")
-                .maxAge(0)
-                .build();
-            ResponseCookie deleteRefreshCookie = ResponseCookie.from("refreshToken", "")
-                .httpOnly(true)
-                .secure(secure)
-                .sameSite("Lax")
-                .path("/")
-                .maxAge(0)
-                .build();
-            httpResponse.addHeader(HttpHeaders.SET_COOKIE, deleteAccessCookie.toString());
-            httpResponse.addHeader(HttpHeaders.SET_COOKIE, deleteRefreshCookie.toString());
+            authCookieFactory.expireSession(httpRequest, httpResponse);
 
             redirectAttributes.addFlashAttribute("success", "account_deleted");
             return "redirect:/";
@@ -197,6 +182,8 @@ public class ProfileController {
     public String changePassword(@Valid @ModelAttribute ChangePasswordRequest request,
                                 BindingResult bindingResult,
                                 Authentication auth,
+                                HttpServletRequest httpRequest,
+                                HttpServletResponse httpResponse,
                                 RedirectAttributes redirectAttributes) {
 
         if (bindingResult.hasErrors()) {
@@ -207,12 +194,17 @@ public class ProfileController {
         String username = auth.getName();
         try {
             memberService.changePassword(username, request.getCurrentPassword(), request.getNewPassword(), request.getConfirmPassword());
-            redirectAttributes.addFlashAttribute("success", "password_updated");
-            return "redirect:/members/profile";
+            authCookieFactory.expireSession(httpRequest, httpResponse);
+            redirectAttributes.addFlashAttribute("msg", "비밀번호가 변경되었습니다. 다시 로그인해 주세요.");
+            return "redirect:/members/loginForm";
         } catch (IllegalArgumentException e) {
             String reason = e.getMessage();
             if (reason == null || reason.isBlank()) reason = "password_input_error";
             redirectAttributes.addFlashAttribute("error", reason);
+            return "redirect:/members/profile";
+        } catch (RuntimeException e) {
+            log.error("비밀번호 변경 후 세션 종료에 실패했습니다: {}", username, e);
+            redirectAttributes.addFlashAttribute("error", "password_change_failed");
             return "redirect:/members/profile";
         }
     }

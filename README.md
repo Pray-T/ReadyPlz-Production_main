@@ -67,6 +67,10 @@ Spring Boot 기반으로 JWT·Redis 인증, WebSocket(STOMP) 알림, MySQL/JPA, 
 
 - Access / Refresh 이중 JWT + Redis(활성 토큰·블랙리스트 저장). 기본 만료: Access **1시간**, Refresh **7일** (`application.properties`)
 <br><br>
+- 비밀번호 변경·재설정이 성공하면 그 계정의 Access·Refresh 세션이 종료됩니다. 다시 로그인해야 합니다.
+<br><br>
+- 인증 쿠키(`accessToken`, `refreshToken`)는 `HttpOnly`, `SameSite=Lax`입니다. `Secure`는 HTTPS이거나, 프록시가 전달한 `X-Forwarded-Proto=https`일 때만 붙습니다 (`server.forward-headers-strategy=framework`).
+<br><br>
 - JWT 발급·갱신·로그아웃: `AuthController` (`/api/auth/**`). 로그인 폼 화면만 `LoginController` (`GET /members/loginForm`)
  <br><br>
 - Spring Security: `JwtAuthenticationFilter`를 `CsrfFilter` **앞**에 배치 + **CSRF 활성**(`NonClearingCookieCsrfTokenRepository` + `CsrfCookieFilter`, `/api/**`만 예외). JWT `STATELESS`에서 매 요청 인증 시 `XSRF-TOKEN` 쿠키가 지워지지 않게 하고, GET에도 쿠키를 내려줌 
@@ -190,8 +194,9 @@ gradlew.bat bootRun --args="--spring.profiles.active=dev"
 |------|--------|-------------|
 | Security | `SecurityConfigTest` | 홈·헬스 공개 접근 |
 | JWT 필터 | `JwtAuthenticationFilterTest` | Redis 활성 토큰 일치/불일치 |
+| 인증 세션 | `AuthSessionTest` | 비밀번호 변경·재설정 후 세션 종료, refresh 401, 쿠키 Secure |
 | 메시징 | `MessageServiceTest` | afterCommit 알림 push, 저장 실패·롤백 시 미발행 |
-| 회원 | `MemberServiceTest` | 닉네임 유지/중복 거부 |
+| 회원 | `MemberServiceTest` | 닉네임 유지/중복 거부, 비밀번호 변경·재설정 시 본인 토큰만 삭제 |
 | 게임 import | `GameImportBatchServiceTest` | 배치 저장·대소문자 무시 중복 스킵 |
 | 예외 | `RestApiExceptionHandlerTest` | API 오류 응답 메시지 노출 제한 |
 | 지원 | `TestRedisConfig` | 테스트용 Redis 빈 |

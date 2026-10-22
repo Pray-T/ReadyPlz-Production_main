@@ -3,9 +3,13 @@ package io.readyplz.readyplz.controller;
 import io.readyplz.readyplz.dto.CountryDTO;
 import io.readyplz.readyplz.dto.MemberForm;
 import io.readyplz.readyplz.dto.request.ResetPasswordRequest;
+import io.readyplz.readyplz.security.AuthCookieFactory;
 import io.readyplz.readyplz.service.MemberService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -20,12 +24,14 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.*;
 
+@Slf4j
 @Controller
 @RequestMapping("/members")
 @RequiredArgsConstructor
 public class MemberController {
 
     private final MemberService memberService;
+    private final AuthCookieFactory authCookieFactory;
 
     @GetMapping("/register")
     public String registerForm(Model model, Locale locale) {
@@ -69,6 +75,8 @@ public class MemberController {
     @PostMapping("/reset-password")
     public String handleResetPassword(@Valid @ModelAttribute ResetPasswordRequest request,
                                       BindingResult bindingResult,
+                                      HttpServletRequest httpRequest,
+                                      HttpServletResponse httpResponse,
                                       RedirectAttributes redirectAttributes) {
         if (bindingResult.hasErrors()) {
             redirectAttributes.addFlashAttribute("error", validationErrorMessage(bindingResult));
@@ -82,9 +90,15 @@ public class MemberController {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
             redirectAttributes.addAttribute("token", request.getToken());
             return "redirect:/members/reset-password";
+        } catch (RuntimeException e) {
+            log.error("비밀번호 재설정 후 세션 종료에 실패했습니다.", e);
+            redirectAttributes.addFlashAttribute("error", "비밀번호 변경에 실패했습니다. 다시 시도해주세요.");
+            redirectAttributes.addAttribute("token", request.getToken());
+            return "redirect:/members/reset-password";
         }
 
-        redirectAttributes.addFlashAttribute("msg", "비밀번호가 성공적으로 변경되었습니다.");
+        authCookieFactory.expireSession(httpRequest, httpResponse);
+        redirectAttributes.addFlashAttribute("msg", "비밀번호가 변경되었습니다. 다시 로그인해 주세요.");
         return "redirect:/members/loginForm";
     }
 

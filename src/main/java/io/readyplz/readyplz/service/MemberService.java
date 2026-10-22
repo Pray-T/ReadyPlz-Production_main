@@ -29,6 +29,7 @@ public class MemberService {
     private final EmailService emailService;
     private final MemberGameRepository memberGameRepository;
     private final MessageRepository messageRepository;
+    private final TokenService tokenService;
 
     @Transactional
     public Long register(Member member) {
@@ -137,6 +138,10 @@ public class MemberService {
         member.setResetToken(null);
         member.setResetTokenExpiry(null);
         memberRepository.save(member);
+        // Redis는 DB 트랜잭션 밖이다. flush로 해시 UPDATE를 먼저 실행하고 토큰을 지운다.
+        // 토큰 삭제가 실패하면 이 메서드가 예외로 끝나 비밀번호·재설정 토큰 변경이 함께 롤백된다.
+        memberRepository.flush();
+        revokeLoginSessions(member.getUsername());
     }
     
     @Transactional
@@ -170,6 +175,14 @@ public class MemberService {
 
         member.changePassword(passwordEncoder.encode(newPassword));
         memberRepository.save(member);
+        // resetPassword와 같이 해시를 먼저 flush하고 토큰을 지운다. 삭제가 실패하면 롤백된다.
+        memberRepository.flush();
+        revokeLoginSessions(username);
+    }
+
+    private void revokeLoginSessions(String username) {
+        tokenService.deleteUserTokens(username);
+        log.info("비밀번호 변경으로 로그인 세션을 종료했습니다: {}", username);
     }
 
     /**

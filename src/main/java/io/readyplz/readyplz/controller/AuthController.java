@@ -8,13 +8,13 @@ import io.readyplz.readyplz.dto.request.LoginRequest;
 import io.readyplz.readyplz.repository.RoleRepository;
 import io.readyplz.readyplz.service.CustomUserDetailsService;
 import io.readyplz.readyplz.service.MemberService;
+import io.readyplz.readyplz.security.AuthCookieFactory;
 import io.readyplz.readyplz.service.TokenService;
 import io.readyplz.readyplz.util.JwtTokenUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.Cookie;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseCookie;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,6 +47,7 @@ public class AuthController {
     private final CustomUserDetailsService customUserDetailsService;
     private final PasswordEncoder passwordEncoder;
     private final RoleRepository roleRepository;
+    private final AuthCookieFactory authCookieFactory;
 
     @PostMapping("/login") 
     public ResponseEntity<Map<String, Object>> login(@Valid @RequestBody LoginRequest loginRequest, HttpServletRequest request, HttpServletResponse response) {
@@ -68,30 +69,13 @@ public class AuthController {
             // Redis에 토큰 저장
             tokenService.saveAccessToken(username, accessToken, jwtProperties.getAccessTokenValidity());
             tokenService.saveRefreshToken(username, refreshToken, jwtProperties.getRefreshTokenValidity());
-            
-            boolean secure = request.isSecure(); 
-            ResponseCookie accessCookie = ResponseCookie.from("accessToken", accessToken)
-                .httpOnly(true)
-                .secure(secure)
-                .sameSite("Lax")
-                .path("/")
-                .maxAge(jwtProperties.getAccessTokenValidity() / 1000)
-                .build();
-            ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", refreshToken)
-                .httpOnly(true)
-                .secure(secure)
-                .sameSite("Lax")
-                .path("/")
-                .maxAge(jwtProperties.getRefreshTokenValidity() / 1000)
-                .build();
 
             Map<String, Object> body = new HashMap<>();
             body.put("username", username);
             body.put("message", "로그인 성공");
 
-            // log.info("로그인 성공: {}", username);
             return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, accessCookie.toString(), refreshCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, authCookieFactory.sessionCookies(request, accessToken, refreshToken))
                 .body(body);
 
         } catch (BadCredentialsException e) {
@@ -108,7 +92,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<Map<String, Object>> register(@Valid @RequestBody MemberForm memberForm) {
+    public ResponseEntity<Map<String, Object>> register(@Valid @RequestBody MemberForm memberForm, HttpServletRequest request) {
         try {
             log.info("회원가입 시도: {}", memberForm.getUsername());
 
@@ -142,7 +126,7 @@ public class AuthController {
             log.info("회원가입 성공: {} (ID: {})", memberForm.getUsername(), memberId);
 
             // 회원가입 후 자동 로그인 시도 (별도 트랜잭션)
-            return performAutoLogin(memberForm.getUsername(), memberForm.getPassword(), null);
+            return performAutoLogin(memberForm.getUsername(), memberForm.getPassword(), request);
 
         } catch (IllegalStateException e) {
             log.error("회원가입 실패 (중복 회원): {}", e.getMessage());
@@ -203,10 +187,10 @@ public class AuthController {
 
             // Redis에 저장된 리프레시 토큰과 비교
             String storedRefreshToken = tokenService.getRefreshToken(username);
-            if (!refreshToken.equals(storedRefreshToken)) {
+            if (storedRefreshToken == null || !refreshToken.equals(storedRefreshToken)) {
                 Map<String, Object> errorBody = new HashMap<>();
                 errorBody.put("message", "재사용 혹은 위조된 리프레시 토큰입니다");
-                return ResponseEntity.badRequest().body(errorBody);
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorBody);
             }
 
             // 이전 access token 무효화 (쿠키)
@@ -229,23 +213,7 @@ public class AuthController {
 
             // 새로운 토큰들을 Redis에 저장
             tokenService.saveAccessToken(username, newAccessToken, jwtProperties.getAccessTokenValidity());
-            tokenService.saveRefreshToken(username, newRefreshToken, jwtProperties.getRefreshTokenValidity()); 
-
-            boolean secure = request.isSecure();
-            ResponseCookie accessCookie = ResponseCookie.from("accessToken", newAccessToken)
-                .httpOnly(true)
-                .secure(secure)
-                .sameSite("Lax")
-                .path("/")
-                .maxAge(jwtProperties.getAccessTokenValidity() / 1000)
-                .build();
-            ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", newRefreshToken)
-                .httpOnly(true)
-                .secure(secure)
-                .sameSite("Lax")
-                .path("/")
-                .maxAge(jwtProperties.getRefreshTokenValidity() / 1000)
-                .build();
+            tokenService.saveRefreshToken(username, newRefreshToken, jwtProperties.getRefreshTokenValidity());
 
             Map<String, Object> body = new HashMap<>();
             body.put("username", username);
@@ -253,7 +221,7 @@ public class AuthController {
 
             log.info("토큰 갱신 성공: {}", username);
             return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, accessCookie.toString(), refreshCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, authCookieFactory.sessionCookies(request, newAccessToken, newRefreshToken))
                 .body(body);
 
         } catch (Exception e) {
@@ -327,28 +295,12 @@ public class AuthController {
                 tokenService.deleteUserTokens(username);
             }
 
-            boolean secure = request.isSecure();
-            ResponseCookie deleteAccessCookie = ResponseCookie.from("accessToken", "")
-                .httpOnly(true)
-                .secure(secure)
-                .sameSite("Lax")
-                .path("/")
-                .maxAge(0)
-                .build();
-            ResponseCookie deleteRefreshCookie = ResponseCookie.from("refreshToken", "")
-                .httpOnly(true)
-                .secure(secure)
-                .sameSite("Lax")
-                .path("/")
-                .maxAge(0)
-                .build();
-
             Map<String, String> body = new HashMap<>();
             body.put("message", "로그아웃 성공");
 
             log.info("로그아웃 성공: {}", username != null ? username : "unknown-user");
             return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, deleteAccessCookie.toString(), deleteRefreshCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, authCookieFactory.expiredSessionCookies(request))
                 .body(body);
 
         } catch (Exception e) {
@@ -391,28 +343,12 @@ public class AuthController {
             tokenService.saveAccessToken(username, accessToken, jwtProperties.getAccessTokenValidity());
             tokenService.saveRefreshToken(username, refreshToken, jwtProperties.getRefreshTokenValidity());
 
-            boolean secure = request != null && request.isSecure();
-            ResponseCookie accessCookie = ResponseCookie.from("accessToken", accessToken)
-                .httpOnly(true)
-                .secure(secure)
-                .sameSite("Lax")
-                .path("/")
-                .maxAge(jwtProperties.getAccessTokenValidity() / 1000)
-                .build();
-            ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", refreshToken)
-                .httpOnly(true)
-                .secure(secure)
-                .sameSite("Lax")
-                .path("/")
-                .maxAge(jwtProperties.getRefreshTokenValidity() / 1000)
-                .build();
-
             Map<String, Object> body = new HashMap<>();
             body.put("username", username);
             body.put("message", "회원가입 및 로그인 성공");
 
             return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, accessCookie.toString(), refreshCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, authCookieFactory.sessionCookies(request, accessToken, refreshToken))
                 .body(body);
 
         } catch (Exception loginException) {
