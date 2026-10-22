@@ -7,7 +7,7 @@
 <br>
 <br>
 이 프로젝트는 Steam 게임을 기준으로 함께 플레이할 유저를 찾고, 회원 간 메시징과 알림을 제공하는 웹 애플리케이션입니다.<br>
-Spring Boot 기반으로 JWT·Redis 인증, WebSocket(STOMP) 알림, MySQL/JPA, AWS(EC2·ELB·RDS) 배포까지 직접 구현·운영했습니다.
+Spring Boot 기반으로 JWT·Redis 인증, WebSocket(STOMP) 알림, MySQL/JPA, AWS(EC2·ELB·RDS) 배포까지 직접 구현·운영했습니다. 현재는 운영중이지 않습니다.
 <br/>
 
 ## 기술 스택
