@@ -100,7 +100,8 @@ Spring Boot 기반으로 JWT·Redis 인증, WebSocket(STOMP) 알림, MySQL/JPA, 
 - MySQL (`readyplz`)
 - Redis (`localhost:6379`)
 - JWT 시크릿: 환경 변수 `JWT_SECRET` 또는(dev) `application-local.properties`의 `jwt.secret`  
-  (`application-local.properties`는 Git 제외 — `src/main/resources/application-local.properties`에 예: `jwt.secret=로컬용 시크릿 키를 입력해주세요`)
+  기본 인코딩은 `jwt.secret-encoding=BASE64`입니다. 디코딩한 키가 32바이트 이상이어야 기동됩니다. `JWT_SECRET`도 같은 Base64 값입니다.  
+  (`application-local.properties`는 Git 제외 — `src/main/resources/application-local.properties`에 로컬용 예: `jwt.secret=cmVhZHlwbHotbG9jYWwtand0LXNlY3JldC0zMmJ5dGVz`)
 
 ### 1) DB 스키마 생성
 운영/기본 설정은 `spring.jpa.hibernate.ddl-auto=validate` 이라 **빈 DB만 있으면 기동이 실패**합니다. 로컬 최초 1회는 스키마를 만든 뒤 validate로 되돌리세요.
