@@ -6,7 +6,7 @@
 이 앱은 전세계에 있는 Steam 게임 유저를 한 곳으로 모아보자! 라는 포부에서 시작된 앱입니다. .<br/>
 본인이 플레이 하는 게임을 선택하고 함께 플레이할 유저를 찾고 그 회원의 국가를 채팅에 띄워줌으로써 전세계의 Steam유저를 한 곳으로 모으려고 시도했습니다.<br/> <br/>
 간략한 소개: 앱회원 간 메시징과 알림을 제공하는 웹 애플리케이션입니다.<br>
-Spring Boot 기반으로 JWT·Redis 인증, WebSocket(STOMP) 알림, MySQL/JPA, AWS(EC2·ELB·RDS) 배포,운영했습니다. (현재는 운영중이지 않습니다.)
+JWT·Redis 인증, WebSocket(STOMP) 알림, MySQL/JPA, AWS(EC2·ELB·RDS) 배포,운영했습니다. (현재는 운영중이지 않습니다.)
 <br/>
 
 ## 기술 스택
