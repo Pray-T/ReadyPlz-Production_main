@@ -72,7 +72,7 @@ A 서버에 접속한 유저와 B 서버에 접속한 유저는 서로의 힙 �
 이러한 한계를 극복하고 분산 환경에서 완벽한 실시간 통신을 보장하기 위해서는, Spring 내장 브로커 대신 "RabbitMQ"나 "Redis Pub/Sub"과 같은 외부 메시지 브로커(External Message Broker)를 도입해야 함을 인지하고 있습니다.<br>
 외부 브로커를 도입하면 모든 서버 노드가 하나의 중앙 브로커를 통해 Pub/Sub 방식으로 메시지를 브로드캐스트하고 구독 정보를 동기화함으로써, 유저가 어느 서버에 연결되어 있든 완벽한 라우팅 일관성을 유지할 수 있게 됩니다.<br>
 
-**로드밸런서(ALB) 환경에서 HTTP Polling(SockJS Fallback) 통신 시, 세션의 연속성은 어떻게 보장될까?:** <br>
+**P.S) 로드밸런서(ALB) 환경에서 HTTP Polling(SockJS Fallback) 통신 시, 세션의 연속성은 어떻게 보장될까?:** <br>
 WebSocket 연결에 실패하여 SockJS의 HTTP 롱 폴링(Long Polling) 방식으로 대체되면 어떠한 문제가 발생할까? <br>
 HTTP는 비연결성(Stateless) 프로토콜이기 때문에, 클라이언트가 주기적으로 보내는 폴링 요청을 ALB(Application Load Balancer)가 여러 서버(A, B, C)에 분산시켜 버리면 세션 단절이 발생합니다.<br>
 이러한 문제를 해결하기 위해서 AWS ALB의 대상 그룹(Target Group) 설정에서 "스티키 세션(Sticky Session, 세션 고정성)" 기능의 On/Off가 가능합니다. 

@@ -3,24 +3,29 @@
 <br>
 <br>
 안녕하세요 먼저 귀한 시간을 내어 저의 깃허브에 방문해 주신 것에 감사드립니다.<br/>
-저는 팀의 일원으로서 팀원들과 함께 좋은 에너지를 만들며 일하고 싶고, 동시에 혼자 고민하는 시간을 통해 전문가로서의 역량을 기르고자 하고 적은 비용으로 어떻게 하면 많은 효과를 누릴 수 있을까? 하고 생각하는 개발자입니다.
-<br>
-<br>
-이 프로젝트는 Steam 게임을 기준으로 함께 플레이할 유저를 찾고, 회원 간 메시징과 알림을 제공하는 웹 애플리케이션입니다.<br>
-Spring Boot 기반으로 JWT·Redis 인증, WebSocket(STOMP) 알림, MySQL/JPA, AWS(EC2·ELB·RDS) 배포까지 직접 구현·운영했습니다. 현재는 운영중이지 않습니다.
+이 앱은 전세계에 있는 Steam 게임 유저를 한 곳으로 모아보자! 라는 포부에서 시작된 앱입니다. .<br/>
+본인이 플레이 하는 게임을 선택하고 함께 플레이할 유저를 찾고 그 회원의 국가를 채팅에 띄워줌으로써 전세계의 Steam유저를 한 곳으 모으려고 시도했습니다.<br/> <br/>
+간략한 소개: 앱회원 간 메시징과 알림을 제공하는 웹 애플리케이션입니다.<br>
+Spring Boot 기반으로 JWT·Redis 인증, WebSocket(STOMP) 알림, MySQL/JPA, AWS(EC2·ELB·RDS) 배포,운영했습니다. (현재는 운영중이지 않습니다.)
 <br/>
 
 ## 기술 스택
 
+<details>
+<summary>클릭시 펼쳐집니다.</summary>
+
 | 구분 | 기술 |
-|------|------|
+| --- | --- |
 | Language | Java 17 |
 | Framework | Spring Boot 3.2.3 |
-| ORM | Spring Data JPA (Hibernate) |
+| ORM | Spring Data JPA |
 | Database | MYSQL |
 | Cache / Token store | Redis |
 | Security | Spring Security |
 | Infra | AWS(EC2·ELB·RDS) |
+
+</details>
+
 
 ## 화면
 
@@ -53,11 +58,12 @@ Spring Boot 기반으로 JWT·Redis 인증, WebSocket(STOMP) 알림, MySQL/JPA, 
 </p>
 <p align="center"><em>Steam API를 실시간 호출하지 않고, 관리자가 JSON을 DB에 적재합니다.</em></p>
 
-대화 목록·문의·프로필 화면은 <a href="./docs/01-architecture.md">아키텍처 개요</a>와 <a href="./docs/2.5-websocket_chat.md">2.5 실시간 알림</a>에 있습니다.
-
 </details>
 
 ## 아키텍쳐 및 주요 기능·동작
+
+<details>
+<summary>클릭시 펼쳐집니다.</summary>
 
 <p align="center">
   <img src="./docs/images/architecture.png" alt="ReadyPlz 시스템 아키텍처" width="400" />
@@ -65,35 +71,38 @@ Spring Boot 기반으로 JWT·Redis 인증, WebSocket(STOMP) 알림, MySQL/JPA, 
 
 <p align="center"><em>시스템 아키텍처 다이어그램 (상세: <a href="./docs/01-architecture.md">docs/01-architecture.md</a>)</em></p>
 
-- Access / Refresh 이중 JWT + Redis(활성 토큰·블랙리스트 저장). 기본 만료: Access **1시간**, Refresh **7일** (`application.properties`)
-<br><br>
+- Access / Refresh 이중 JWT + Redis(활성 토큰·블랙리스트 저장). 기본 만료: Access **1시간**, Refresh **7일** 
+
 - 비밀번호 변경·재설정이 성공하면 그 계정의 Access·Refresh 세션이 종료됩니다. 다시 로그인해야 합니다.
-<br><br>
+
 - 인증 쿠키(`accessToken`, `refreshToken`)는 `HttpOnly`, `SameSite=Lax`입니다. `Secure`는 HTTPS이거나, 프록시가 전달한 `X-Forwarded-Proto=https`일 때만 붙습니다 (`server.forward-headers-strategy=framework`).
-<br><br>
+
 - JWT 발급·갱신·로그아웃: `AuthController` (`/api/auth/**`). 로그인 폼 화면만 `LoginController` (`GET /members/loginForm`)
- <br><br>
-- Spring Security: `JwtAuthenticationFilter`를 `CsrfFilter` **앞**에 배치 + **CSRF 활성**(`NonClearingCookieCsrfTokenRepository` + `CsrfCookieFilter`, `/api/**`만 예외). JWT `STATELESS`에서 매 요청 인증 시 `XSRF-TOKEN` 쿠키가 지워지지 않게 하고, GET에도 쿠키를 내려줌 
-<br><br>
-- API 예외(`RestApiExceptionHandler`): 검증 실패·깨진 JSON·필수 파라미터 누락은 400, 인증은 401, 권한은 403, 없는 정적 자원은 404, 허용하지 않은 메서드는 405, 충돌은 409, 그 외 예상 밖 예외는 500입니다. 500은 고정 문구이고 예외 원문은 넣지 않으며, 로그인 폼(`GET /members/loginForm`)은 `msgCode`·`errorCode`가 없거나 없는 메시지 키여도 JSON이 아니라 폼 HTML입니다.
-<br><br>
+
+- Spring Security: `JwtAuthenticationFilter`를 `CsrfFilter` **앞**에 배치 + **CSRF 활성**(`NonClearingCookieCsrfTokenRepository` + `CsrfCookieFilter`, `/api/**`만 예외). <br/>
+JWT `STATELESS`에서 매 요청 인증 시 `XSRF-TOKEN` 쿠키가 지워지지 않게 하고, GET에도 쿠키를 내려줍니다.
+
+- API 예외(`RestApiExceptionHandler`): 검증 실패·깨진 JSON·필수 파라미터 누락은 400, 인증은 401, 권한은 403, 없는 정적 자원은 404, 허용하지 않은 메서드는 405, 충돌은 409, 그 외 예상 밖 예외는 500입니다. 500은 고정 문구이고 오류 내용을 응답에 싣지 않습니다.
+
 - 게임 컬렉션·동일 게임 유저 조회 (Steam 데이터는 JSON → DB 사전 적재, 실시간 Steam API 호출 없음). 한 회원의 게임은 최대 5개이고, 추가는 회원 행 잠금이 걸린 한 트랜잭션이라 동시 요청에도 5개를 넘지 않습니다.
- <br><br>
-- 회원 1:1 메시징은 **HTTP** (`MessageController`, `POST /messages/send` 등). `MessageService.sendMessage`가 DB 저장 후 트랜잭션 **afterCommit** 시점에만 `SimpMessagingTemplate.convertAndSendToUser(수신자 username, /queue/notifications, payload)`로 실시간 알림 push. 클라이언트는 사용자 이름을 경로에 넣지 않고 `/user/queue/notifications`를 구독한다. 페이로드는 `NotificationDTO{type, message, data}`(예: `type="MESSAGE"`, `data`=발신자 닉네임)이며, 브로커 발행 실패는 try/catch로 격리되어 저장·HTTP 응답에 영향 없음. 메시지 한 건 저장은 발신자·수신자의 메시지 컬렉션 전체를 읽지 않는다
- <br><br>
-- WebSocket(STOMP/SockJS): 엔드포인트 `/ws-nearby-gamers`, SimpleBroker `/queue`·`/topic`, 유저 접두사 `/user`, 쿠키 기반 JWT 연결 인증(`WebSocketConfig`, `WebSocketAuthChannelInterceptor`, principal 이름=username). STOMP는 CONNECT뿐 아니라 SUBSCRIBE/SEND도 검사한다. 인증된 사용자는 `/user/queue/notifications`만 구독할 수 있고, 클라이언트의 STOMP SEND는 모두 거절된다. Redis는 WebSocket 세션 저장용이 아니라 JWT용
- <br><br>
-- 비동기 이메일 비밀번호 재설정 (`EmailService` + `@Async`). `MemberService`가 토큰을 DB에 저장한 뒤 트랜잭션 **afterCommit** 시점에만 메일을 발송하여, 커밋 전 발송으로 인한 토큰 미조회를 방지 
-<br><br>
-- ADMIN JSON 게임 적재 (`POST /admin/db/load-json-games`) 
-<br><br>
-- 프로필: `ProfileController` (`/members/profile`, `confirm-nickname`, `change-password` 등)
-<br>
-<br>
+
+- 회원 1:1 메시징은 **HTTP** 를 사용합니다. (ex: POST /messages/send).<br/>
+`MessageService.sendMessage`가 DB 저장 후 트랜잭션 **afterCommit** 시점에만 `SimpMessagingTemplate`의 `convertAndSendToUser(수신자 username, /queue/notifications, payload)` 메서드로 알림을 보냅니다. <br/>
+클라이언트는 사용자 이름을 경로에 넣지 않고 `/user/queue/notifications`를 구독합니다. 페이로드는 `NotificationDTO{type, message, data}`(예: `type="MESSAGE"`, `data`=발신자 닉네임)이며, 브로커 발행 실패는 try/catch로 격리되어 저장·HTTP 응답에 영향 없음.
+
+- WebSocket(STOMP/SockJS)은 실시간 알림 채널입니다. `/ws-nearby-gamers`로 접속하여 쿠키의 JWT를 확인 -> 인증된 username으로 연결합니다(`WebSocketConfig`, `WebSocketAuthChannelInterceptor`). 알림 전달은 서버 메모리의 SimpleBroker가 맡습니다. 연결·구독·전송을 모두 검사합니다.
+
+- 비동기 이메일 비밀번호 재설정(`EmailService` + `@Async`): `MemberService`가 토큰을 DB에 저장한 뒤 트랜잭션 **afterCommit** 시점에만 메일을 발송하여, 커밋 전 발송으로 인한 토큰 미조회를 방지합니다.
+
+- ADMIN계정으로 로그인시 JSON 게임 적재 버튼 활성화 (`POST /admin/db/load-json-games`)
+</details>
 
 ## 로컬 실행
 
-이 저장소는 현재 운영하지 않는다. 로컬은 dev 프로필이고, MySQL 계정 예시는 `application-dev.properties`의 `readyplz`이다. 본인 PC 계정이 다르면 `application-dev.properties`의 로컬 계정만 바꾸면 된다.
+<details>
+<summary>클릭시 펼쳐집니다.</summary>
+
+이 저장소는 현재 운영하지 않습니다. 로컬은 dev 프로필이고, MySQL 계정 예시는 `application-dev.properties`의 `readyplz`입니다. 본인 PC 계정이 다르면 `application-dev.properties`의 로컬 계정만 바꿔서 실행하면 됩니다.
 
 ### 사전 준비
 - JDK 17+
@@ -187,13 +196,16 @@ gradlew.bat bootRun --args="--spring.profiles.active=dev"
 1. Redis·MySQL 기동 → DB 생성 → `ddl-auto=update`로 1회 기동  
 2. 회원가입 → SQL로 ADMIN 승격 → 재로그인  
 3. `POST /admin/db/load-json-games`로 게임 데이터 적재  
-4. `/games/collection`, `/messages` 등 핵심 화면 확인  
+4. `/games/collection`, `/messages` 등 핵심 화면 확인
 
-<br/>
+</details>
 
 ## 테스트
 
-`src/test` 아래 단위/슬라이스 테스트가 있습니다. H2 in-memory + Redis/Mail 자동설정 제외(`application-test.properties`)로 로컬에서 빠르게 돌릴 수 있습니다.
+<details>
+<summary>클릭시 펼쳐집니다.</summary>
+
+src/test의 테스트는 application-test.properties의 H2로 로컬에서 바로 실행할 수 있습니다. Redis와 메일 서버는 띄우지 않습니다.
 
 | 영역 | 클래스 | 검증 포인트 |
 |------|--------|-------------|
@@ -216,9 +228,9 @@ Windows:
 gradlew.bat test
 ```
 
-`gradlew`의 실행 비트가 저장소에 들어 있어 Linux/macOS에서 `./gradlew test`를 실행할 수 있습니다. 스크립트 줄바꿈은 LF로 유지됩니다.
+`gradlew`의 실행 비트가 저장소에 들어 있어 Linux/macOS에서 `./gradlew test`를 실행할 수 있습니다.
 
-<br/>
+</details>
 
 ---
 
