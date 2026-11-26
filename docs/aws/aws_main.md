@@ -4,9 +4,9 @@
 *아래 링크를 클릭하시면 해당 상세 페이지로 이동합니다.*
 
 ###  [1. EC2 관련](./ec2.md)
-EC2와 생성과 설정에 관련된 내용입니다.
+EC2 생성과 설정에 관련된 내용입니다.
 
-###  [2. Ubnutu에 SpringBoot 서버 배포 관련](./ubuntu.md)
+###  [2. Ubuntu에 SpringBoot 서버 배포 관련](./ubuntu.md)
 ubuntu에 springboot 서버 배포와 관련된 내용입니다.
 
 ###  [3. ELB(Elastic Load Balancer) 관련](./elb.md)

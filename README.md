@@ -3,10 +3,10 @@
 <br>
 <br>
 안녕하세요 먼저 귀한 시간을 내어 저의 깃허브에 방문해 주신 것에 감사드립니다.<br/>
-이 앱은 전세계에 있는 Steam 게임 유저를 한 곳으로 모아보자! 라는 포부에서 시작된 앱입니다. .<br/>
-본인이 플레이 하는 게임을 선택하고 함께 플레이할 유저를 찾고 그 회원의 국가를 채팅에 띄워줌으로써 전세계의 Steam유저를 한 곳으로 모으려고 시도했습니다.<br/> <br/>
-간략한 소개: 앱회원 간 메시징과 알림을 제공하는 웹 애플리케이션입니다.<br>
-JWT·Redis 인증, WebSocket(STOMP) 알림, MySQL/JPA, AWS(EC2·ELB·RDS) 배포,운영했습니다. (현재는 운영중이지 않습니다.)
+이 앱은 전 세계에 있는 Steam 게임 유저를 한 곳으로 모아보자! 라는 포부에서 시작된 앱입니다.<br/>
+본인이 플레이하는 게임을 선택하고 함께 플레이할 유저를 찾고 그 회원의 국가를 채팅에 띄워줌으로써 전 세계의 Steam 유저를 한 곳으로 모으려고 시도했습니다.<br/>
+간략한 소개: 앱 회원 간 메시징과 알림을 제공하는 웹 애플리케이션입니다.<br>
+JWT·Redis 인증, WebSocket(STOMP) 알림, MySQL/JPA, AWS(EC2·ELB·RDS) 배포, 운영했습니다. (현재는 운영 중이지 않습니다.)
 <br/>
 
 ## 기술 스택
@@ -60,7 +60,7 @@ JWT·Redis 인증, WebSocket(STOMP) 알림, MySQL/JPA, AWS(EC2·ELB·RDS) 배포
 
 </details>
 
-## 아키텍쳐 및 주요 기능·동작
+## 아키텍처 및 주요 기능·동작
 
 <details>
 <summary>클릭시 펼쳐집니다.</summary>
@@ -88,13 +88,13 @@ JWT `STATELESS`에서 매 요청 인증 시 `XSRF-TOKEN` 쿠키가 지워지지 
 
 - 회원 1:1 메시징은 **HTTP** 를 사용합니다. (ex: POST /messages/send).<br/>
 `MessageService.sendMessage`가 DB 저장 후 트랜잭션 **afterCommit** 시점에만 `SimpMessagingTemplate`의 `convertAndSendToUser(수신자 username, /queue/notifications, payload)` 메서드로 알림을 보냅니다. <br/>
-클라이언트는 사용자 이름을 경로에 넣지 않고 `/user/queue/notifications`를 구독합니다. 페이로드는 `NotificationDTO{type, message, data}`(예: `type="MESSAGE"`, `data`=발신자 닉네임)이며, 브로커 발행 실패는 try/catch로 격리되어 저장·HTTP 응답에 영향 없음.
+클라이언트는 사용자 이름을 경로에 넣지 않고 `/user/queue/notifications`를 구독합니다. 페이로드는 `NotificationDTO{type, message, data}`(예: `type="MESSAGE"`, `data`=발신자 닉네임)이며, 브로커 발행 실패는 try/catch로 격리되어 저장·HTTP 응답에 영향이 없습니다.
 
 - WebSocket(STOMP/SockJS)은 실시간 알림 채널입니다. `/ws-nearby-gamers`로 접속하여 쿠키의 JWT를 확인 -> 인증된 username으로 연결합니다(`WebSocketConfig`, `WebSocketAuthChannelInterceptor`). 알림 전달은 서버 메모리의 SimpleBroker가 맡습니다. 연결·구독·전송을 모두 검사합니다.
 
 - 비동기 이메일 비밀번호 재설정(`EmailService` + `@Async`): `MemberService`가 토큰을 DB에 저장한 뒤 트랜잭션 **afterCommit** 시점에만 메일을 발송하여, 커밋 전 발송으로 인한 토큰 미조회를 방지합니다.
 
-- ADMIN계정으로 로그인시 JSON 게임 적재 버튼 활성화 (`POST /admin/db/load-json-games`)
+- ADMIN 계정으로 로그인 시 JSON 게임 적재 버튼 활성화 (`POST /admin/db/load-json-games`)
 </details>
 
 ## 로컬 실행
@@ -266,8 +266,8 @@ EC2, ELB, RDS 등 배포 관련 내용입니다.
 - [RDS](./docs/aws/rds.md)
 
 ## 다른 포트폴리오
-- [은행 이체 REST API를 통해 MySQL 동시성 정합성과 Redis 멱등성/스로틀을 중심으로 구현, 대량 데이터 인덱스 조회 실험 검증](https://github.com/Pray-T/BankTransferSys_Backend_Restful) <br>
-- [Cursor Agent를 이용하여 GitHub Copilot을 저렴하게 사용해보기](https://github.com/Pray-T/GitHub-Copilot-With-Cursor)
+- [MySQL의 동시성, 정합성을 중심으로 은행의 이체를 구현해 본 프로젝트](https://github.com/Pray-T/BankTransferSys_Backend_Restful) <br>
+- [자연어 프롬프트를 사용하여 3자의 깃허브에 기여를 할 수 있는 앱](https://github.com/Pray-T/GitHub-Copilot-With-Cursor)
 <br>
 <br>
 
